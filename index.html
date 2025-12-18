@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>US Citizenship Test - Bulgarian Study Guide</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600&family=Source+Sans+3:wght@300;400;600;700&display=swap');
+        
+        :root {
+            --primary-blue: #1e3a8a;
+            --accent-red: #dc2626;
+            --warm-white: #fefefe;
+            --light-gray: #f1f5f9;
+            --text-dark: #1f2937;
+            --text-medium: #4b5563;
+            --success-green: #059669;
+            --warning-amber: #d97706;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Source Sans 3', sans-serif;
+            background: linear-gradient(135deg, var(--primary-blue) 0%, #3b82f6 100%);
+            min-height: 100vh;
+            color: var(--text-dark);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 2rem;
+            padding: 1rem;
+        }
+
+        .header h1 {
+            font-family: 'Crimson Text', serif;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p { opacity: 0.9; font-size: 1.1rem; }
+
+        .card {
+            background: var(--warm-white);
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: var(--light-gray);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 600;
+            color: var(--primary-blue);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-body { padding: 1.5rem; }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .control-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-dark);
+            font-size: 0.9rem;
+        }
+
+        select, .btn {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        select:focus { outline: none; border-color: var(--primary-blue); }
+
+        .btn {
+            cursor: pointer;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: var(--primary-blue);
+            color: white;
+            border-color: var(--primary-blue);
+        }
+
+        .btn-primary:hover { background: #1e40af; }
+
+        .btn-success {
+            background: var(--success-green);
+            color: white;
+            border-color: var(--success-green);
+        }
+
+        .btn-warning {
+            background: var(--warning-amber);
+            color: white;
+            border-color: var(--warning-amber);
+        }
+
+        .btn-outline {
+            background: white;
+            color: var(--primary-blue);
+            border-color: var(--primary-blue);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary-blue);
+            color: white;
+        }
+
+        .flashcard-area {
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .question-number {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: var(--primary-blue);
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .category-tag {
+            background: var(--warning-amber);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+        }
+
+        .question-text {
+            font-family: 'Crimson Text', serif;
+            font-size: 1.8rem;
+            color: var(--primary-blue);
+            margin-bottom: 1.5rem;
+            line-height: 1.4;
+        }
+
+        .answer-text {
+            font-size: 1.3rem;
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .bulgarian-text {
+            color: var(--text-medium);
+            font-style: italic;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px dashed #e2e8f0;
+        }
+
+        .audio-controls {
+            display: flex;
+            gap: 0.75rem;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .audio-btn {
+            background: var(--success-green);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .audio-btn:hover { transform: scale(1.05); }
+        .audio-btn:disabled { background: #9ca3af; cursor: not-allowed; transform: none; }
+
+        .audio-btn.speaking {
+            background: var(--accent-red);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .flip-hint {
+            color: var(--text-medium);
+            font-size: 0.9rem;
+            margin-top: 1rem;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .nav-buttons .btn { width: auto; padding: 0.75rem 1.5rem; }
+
+        .progress-bar {
+            background: #e2e8f0;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, var(--success-green), #10b981);
+            height: 100%;
+            transition: width 0.3s;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .stat { flex: 1; min-width: 80px; }
+        .stat-value { font-size: 1.5rem; font-weight: 700; color: var(--primary-blue); }
+        .stat-label { font-size: 0.8rem; color: var(--text-medium); text-transform: uppercase; }
+
+        .practice-timer {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent-red);
+            font-family: 'Crimson Text', serif;
+        }
+
+        .practice-feedback {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1.5rem;
+        }
+
+        .hidden { display: none !important; }
+
+        .instructions-box {
+            background: #fef3c7;
+            border-left: 4px solid var(--warning-amber);
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 600px) {
+            .header h1 { font-size: 1.8rem; }
+            .question-text { font-size: 1.4rem; }
+            .controls-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🇺🇸 US Citizenship Test</h1>
+            <p>Flashcards with Bulgarian Support & Audio</p>
+            <p style="font-size: 0.9rem; margin-top: 0.5rem;">Карти за учене с българска поддръжка</p>
+        </header>
+
+        <!-- Setup Card -->
+        <div class="card" id="setupCard">
+            <div class="card-header">📚 Study Settings / Настройки</div>
+            <div class="card-body">
+                <div class="controls-grid">
+                    <div class="control-group">
+                        <label>Category / Категория</label>
+                        <select id="categorySelect">
+                            <option value="all">All Questions (Всички)</option>
+                            <option value="government">Government (Правителство)</option>
+                            <option value="history">History (История)</option>
+                            <option value="geography">Geography (География)</option>
+                            <option value="symbols">Symbols & Holidays (Символи)</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Study Mode / Режим</label>
+                        <select id="modeSelect">
+                            <option value="flashcard">Flashcards (Карти)</option>
+                            <option value="practice">Oral Practice (Устна практика)</option>
+                            <option value="quiz">Quiz - 10 Questions (Тест)</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Show Bulgarian / Български</label>
+                        <select id="langSelect">
+                            <option value="both">English + Bulgarian</option>
+                            <option value="en">English Only</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>&nbsp;</label>
+                        <button class="btn btn-primary" onclick="startStudy()">
+                            Start / Започни ▶
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Card -->
+        <div class="card hidden" id="progressCard">
+            <div class="card-body">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--text-medium);">
+                    <span id="progressText">Question 1 of 100</span>
+                    <span id="modeText">Flashcard Mode</span>
+                </div>
+                <div class="stats-row">
+                    <div class="stat">
+                        <div class="stat-value" id="correctStat">0</div>
+                        <div class="stat-label">Correct</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="totalStat">0</div>
+                        <div class="stat-label">Reviewed</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="accuracyStat">-</div>
+                        <div class="stat-label">Accuracy</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Flashcard -->
+        <div class="card hidden" id="flashcardCard">
+            <div class="card-body">
+                <div class="flashcard-area" id="flashcardArea">
+                    <div class="question-number" id="questionNumber">1 / 100</div>
+                    <div class="category-tag" id="categoryTag">Government</div>
+                    
+                    <!-- Question Side -->
+                    <div id="questionSide">
+                        <div class="question-text" id="questionText"></div>
+                        <div class="bulgarian-text" id="questionBulgarian"></div>
+                        
+                        <div class="audio-controls">
+                            <button class="audio-btn" id="playQuestionBtn" onclick="speakQuestion()">
+                                🔊 Listen / Слушай
+                            </button>
+                            <button class="audio-btn" onclick="speakQuestion(true)" style="background: var(--primary-blue);">
+                                🐢 Slow / Бавно
+                            </button>
+                        </div>
+                        
+                        <p class="flip-hint">Click anywhere or press Space to reveal answer<br>
+                        <span style="font-style: italic;">Щракнете за отговора</span></p>
+                    </div>
+                    
+                    <!-- Answer Side -->
+                    <div id="answerSide" class="hidden">
+                        <div class="question-text" style="font-size: 1.3rem; color: var(--text-medium);" id="answerQuestionText"></div>
+                        <div class="answer-text" id="answerText"></div>
+                        <div class="bulgarian-text" id="answerBulgarian"></div>
+                        
+                        <div class="audio-controls">
+                            <button class="audio-btn" onclick="speakAnswer()">
+                                🔊 Listen to Answer
+                            </button>
+                            <button class="audio-btn" onclick="speakAnswer(true)" style="background: var(--primary-blue);">
+                                🐢 Slow
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Practice Timer -->
+                <div id="practiceTimer" class="hidden" style="text-align: center; margin-bottom: 1rem;">
+                    <p style="margin-bottom: 0.5rem;">Time to answer / Време за отговор:</p>
+                    <div class="practice-timer" id="timerDisplay">30</div>
+                </div>
+                
+                <!-- Navigation -->
+                <div class="nav-buttons" id="navButtons">
+                    <button class="btn btn-outline" onclick="prevCard()">← Previous</button>
+                    <button class="btn btn-outline" onclick="flipCard()">Flip Card ↻</button>
+                    <button class="btn btn-primary" onclick="nextCard()">Next →</button>
+                </div>
+                
+                <!-- Practice Feedback -->
+                <div class="practice-feedback hidden" id="practiceFeedback">
+                    <button class="btn btn-success" onclick="markCorrect()">✓ I Know This</button>
+                    <button class="btn btn-warning" onclick="markIncorrect()">✗ Need Practice</button>
+                </div>
+                
+                <!-- End Session -->
+                <div style="text-align: center; margin-top: 1.5rem;">
+                    <button class="btn btn-outline" onclick="endSession()" style="width: auto;">
+                        End Session / Край
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Card -->
+        <div class="card hidden" id="resultsCard">
+            <div class="card-header">🎉 Session Complete! / Готово!</div>
+            <div class="card-body" style="text-align: center;">
+                <h2 style="font-family: 'Crimson Text', serif; color: var(--primary-blue); margin-bottom: 1rem;">
+                    Great work! / Браво!
+                </h2>
+                <div class="stats-row">
+                    <div class="stat">
+                        <div class="stat-value" id="finalCorrect">0</div>
+                        <div class="stat-label">Correct</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="finalTotal">0</div>
+                        <div class="stat-label">Questions</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="finalAccuracy">0%</div>
+                        <div class="stat-label">Accuracy</div>
+                    </div>
+                </div>
+                <p style="margin: 1.5rem 0; color: var(--text-medium);" id="resultMessage"></p>
+                <div class="nav-buttons">
+                    <button class="btn btn-primary" onclick="startStudy()">Study Again / Пак</button>
+                    <button class="btn btn-outline" onclick="resetAll()">New Settings / Нови настройки</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+// Complete list of 100 USCIS Civics Questions with Bulgarian translations
+const allQuestions = [
+    // AMERICAN GOVERNMENT - Principles of Democracy
+    { id: 1, category: "government", q: "What is the supreme law of the land?", a: "The Constitution", qBg: "Кой е върховният закон на страната?", aBg: "Конституцията" },
+    { id: 2, category: "government", q: "What does the Constitution do?", a: "Sets up the government, defines the government, protects basic rights of Americans", qBg: "Какво прави Конституцията?", aBg: "Създава правителството, определя правителството, защитава основните права на американците" },
+    { id: 3, category: "government", q: "The idea of self-government is in the first three words of the Constitution. What are these words?", a: "We the People", qBg: "Идеята за самоуправление е в първите три думи на Конституцията. Кои са тези думи?", aBg: "Ние, народът" },
+    { id: 4, category: "government", q: "What is an amendment?", a: "A change or addition to the Constitution", qBg: "Какво е поправка?", aBg: "Промяна или допълнение към Конституцията" },
+    { id: 5, category: "government", q: "What do we call the first ten amendments to the Constitution?", a: "The Bill of Rights", qBg: "Как наричаме първите десет поправки към Конституцията?", aBg: "Декларацията за правата" },
+    { id: 6, category: "government", q: "What is one right or freedom from the First Amendment?", a: "Speech, religion, assembly, press, petition the government", qBg: "Кое е едно право или свобода от Първата поправка?", aBg: "Слово, религия, събрание, печат, петиция към правителството" },
+    { id: 7, category: "government", q: "How many amendments does the Constitution have?", a: "27", qBg: "Колко поправки има Конституцията?", aBg: "27" },
+    { id: 8, category: "history", q: "What did the Declaration of Independence do?", a: "Announced our independence from Great Britain, declared our independence from Great Britain, said that the United States is free from Great Britain", qBg: "Какво направи Декларацията за независимост?", aBg: "Обяви нашата независимост от Великобритания" },
+    { id: 9, category: "history", q: "What are two rights in the Declaration of Independence?", a: "Life, liberty, pursuit of happiness", qBg: "Кои са две права в Декларацията за независимост?", aBg: "Живот, свобода, стремеж към щастие" },
+    { id: 10, category: "government", q: "What is freedom of religion?", a: "You can practice any religion, or not practice a religion", qBg: "Какво е свобода на религията?", aBg: "Можете да практикувате всяка религия или да не практикувате религия" },
+    { id: 11, category: "government", q: "What is the economic system in the United States?", a: "Capitalist economy, market economy", qBg: "Каква е икономическата система в САЩ?", aBg: "Капиталистическа икономика, пазарна икономика" },
+    { id: 12, category: "government", q: "What is the 'rule of law'?", a: "Everyone must follow the law. Leaders must obey the law. Government must obey the law. No one is above the law.", qBg: "Какво е 'върховенството на закона'?", aBg: "Всеки трябва да спазва закона. Лидерите трябва да спазват закона. Никой не е над закона." },
+    
+    // System of Government
+    { id: 13, category: "government", q: "Name one branch or part of the government.", a: "Congress, legislative, President, executive, the courts, judicial", qBg: "Назовете един клон или част от правителството.", aBg: "Конгрес, законодателна, президент, изпълнителна, съдилища, съдебна" },
+    { id: 14, category: "government", q: "What stops one branch of government from becoming too powerful?", a: "Checks and balances, separation of powers", qBg: "Какво спира един клон на правителството да стане твърде мощен?", aBg: "Проверки и баланси, разделение на властите" },
+    { id: 15, category: "government", q: "Who is in charge of the executive branch?", a: "The President", qBg: "Кой е начело на изпълнителната власт?", aBg: "Президентът" },
+    { id: 16, category: "government", q: "Who makes federal laws?", a: "Congress, Senate and House of Representatives, U.S. or national legislature", qBg: "Кой прави федералните закони?", aBg: "Конгресът, Сенатът и Камарата на представителите" },
+    { id: 17, category: "government", q: "What are the two parts of the U.S. Congress?", a: "The Senate and House of Representatives", qBg: "Кои са двете части на Конгреса на САЩ?", aBg: "Сенатът и Камарата на представителите" },
+    { id: 18, category: "government", q: "How many U.S. Senators are there?", a: "100", qBg: "Колко американски сенатори има?", aBg: "100" },
+    { id: 19, category: "government", q: "We elect a U.S. Senator for how many years?", a: "6", qBg: "За колко години избираме американски сенатор?", aBg: "6" },
+    { id: 20, category: "government", q: "Who is one of your state's U.S. Senators now?", a: "Answers vary by state", qBg: "Кой е един от сенаторите на вашия щат сега?", aBg: "Отговорите варират по щат" },
+    { id: 21, category: "government", q: "The House of Representatives has how many voting members?", a: "435", qBg: "Колко гласуващи членове има Камарата на представителите?", aBg: "435" },
+    { id: 22, category: "government", q: "We elect a U.S. Representative for how many years?", a: "2", qBg: "За колко години избираме представител в САЩ?", aBg: "2" },
+    { id: 23, category: "government", q: "Name your U.S. Representative.", a: "Answers vary by district", qBg: "Назовете вашия представител в САЩ.", aBg: "Отговорите варират по район" },
+    { id: 24, category: "government", q: "Who does a U.S. Senator represent?", a: "All people of the state", qBg: "Кого представлява американски сенатор?", aBg: "Всички хора в щата" },
+    { id: 25, category: "government", q: "Why do some states have more Representatives than other states?", a: "Because of the state's population, because they have more people", qBg: "Защо някои щати имат повече представители от други?", aBg: "Заради населението на щата, защото имат повече хора" },
+    { id: 26, category: "government", q: "We elect a President for how many years?", a: "4", qBg: "За колко години избираме президент?", aBg: "4" },
+    { id: 27, category: "government", q: "In what month do we vote for President?", a: "November", qBg: "В кой месец гласуваме за президент?", aBg: "Ноември" },
+    { id: 28, category: "government", q: "What is the name of the President of the United States now?", a: "Donald Trump (as of 2025)", qBg: "Как се казва президентът на САЩ сега?", aBg: "Доналд Тръмп (към 2025)" },
+    { id: 29, category: "government", q: "What is the name of the Vice President of the United States now?", a: "JD Vance (as of 2025)", qBg: "Как се казва вицепрезидентът на САЩ сега?", aBg: "Джей Ди Ванс (към 2025)" },
+    { id: 30, category: "government", q: "If the President can no longer serve, who becomes President?", a: "The Vice President", qBg: "Ако президентът не може повече да служи, кой става президент?", aBg: "Вицепрезидентът" },
+    { id: 31, category: "government", q: "If both the President and the Vice President can no longer serve, who becomes President?", a: "The Speaker of the House", qBg: "Ако и президентът, и вицепрезидентът не могат повече да служат, кой става президент?", aBg: "Председателят на Камарата" },
+    { id: 32, category: "government", q: "Who is the Commander in Chief of the military?", a: "The President", qBg: "Кой е върховният главнокомандващ на армията?", aBg: "Президентът" },
+    { id: 33, category: "government", q: "Who signs bills to become laws?", a: "The President", qBg: "Кой подписва законопроектите, за да станат закони?", aBg: "Президентът" },
+    { id: 34, category: "government", q: "Who vetoes bills?", a: "The President", qBg: "Кой налага вето на законопроекти?", aBg: "Президентът" },
+    { id: 35, category: "government", q: "What does the President's Cabinet do?", a: "Advises the President", qBg: "Какво прави кабинетът на президента?", aBg: "Съветва президента" },
+    { id: 36, category: "government", q: "What are two Cabinet-level positions?", a: "Secretary of State, Secretary of Defense, Secretary of Education, Secretary of Treasury, Attorney General", qBg: "Кои са две позиции на ниво кабинет?", aBg: "Държавен секретар, министър на отбраната, министър на образованието, министър на финансите, главен прокурор" },
+    { id: 37, category: "government", q: "What does the judicial branch do?", a: "Reviews laws, explains laws, resolves disputes, decides if a law goes against the Constitution", qBg: "Какво прави съдебната власт?", aBg: "Преразглежда законите, обяснява законите, решава спорове, решава дали законът противоречи на Конституцията" },
+    { id: 38, category: "government", q: "What is the highest court in the United States?", a: "The Supreme Court", qBg: "Кой е най-висшият съд в САЩ?", aBg: "Върховният съд" },
+    { id: 39, category: "government", q: "How many justices are on the Supreme Court?", a: "9", qBg: "Колко съдии има във Върховния съд?", aBg: "9" },
+    { id: 40, category: "government", q: "Who is the Chief Justice of the United States now?", a: "John Roberts", qBg: "Кой е главният съдия на САЩ сега?", aBg: "Джон Робъртс" },
+    { id: 41, category: "government", q: "Under our Constitution, some powers belong to the federal government. What is one power of the federal government?", a: "To print money, to declare war, to create an army, to make treaties", qBg: "Според нашата Конституция някои правомощия принадлежат на федералното правителство. Кое е едно правомощие?", aBg: "Да печата пари, да обявява война, да създава армия, да сключва договори" },
+    { id: 42, category: "government", q: "Under our Constitution, some powers belong to the states. What is one power of the states?", a: "Provide schooling and education, provide protection (police), provide safety (fire departments), give a driver's license, approve zoning and land use", qBg: "Според нашата Конституция някои правомощия принадлежат на щатите. Кое е едно правомощие?", aBg: "Осигуряване на образование, осигуряване на защита (полиция), издаване на шофьорска книжка" },
+    { id: 43, category: "government", q: "Who is the Governor of your state now?", a: "Answers vary by state", qBg: "Кой е губернаторът на вашия щат сега?", aBg: "Отговорите варират по щат" },
+    { id: 44, category: "government", q: "What is the capital of your state?", a: "Answers vary by state", qBg: "Коя е столицата на вашия щат?", aBg: "Отговорите варират по щат" },
+    { id: 45, category: "government", q: "What are the two major political parties in the United States?", a: "Democratic and Republican", qBg: "Кои са двете основни политически партии в САЩ?", aBg: "Демократическа и Републиканска" },
+    { id: 46, category: "government", q: "What is the political party of the President now?", a: "Republican", qBg: "Коя е политическата партия на президента сега?", aBg: "Републиканска" },
+    { id: 47, category: "government", q: "What is the name of the Speaker of the House of Representatives now?", a: "Mike Johnson (as of 2025)", qBg: "Как се казва председателят на Камарата на представителите сега?", aBg: "Майк Джонсън (към 2025)" },
+    
+    // Rights and Responsibilities
+    { id: 48, category: "government", q: "There are four amendments to the Constitution about who can vote. Describe one of them.", a: "Citizens 18 and older can vote. You don't have to pay to vote. Any citizen can vote (man or woman). A male citizen of any race can vote.", qBg: "Има четири поправки към Конституцията за това кой може да гласува. Опишете една.", aBg: "Гражданите на 18 и повече години могат да гласуват. Не трябва да плащате, за да гласувате. Всеки гражданин може да гласува." },
+    { id: 49, category: "government", q: "What is one responsibility that is only for United States citizens?", a: "Serve on a jury, vote in a federal election", qBg: "Коя е една отговорност само за граждани на САЩ?", aBg: "Участие в жури, гласуване във федерални избори" },
+    { id: 50, category: "government", q: "Name one right only for United States citizens.", a: "Vote in a federal election, run for federal office", qBg: "Назовете едно право само за граждани на САЩ.", aBg: "Гласуване във федерални избори, кандидатиране за федерална длъжност" },
+    { id: 51, category: "government", q: "What are two rights of everyone living in the United States?", a: "Freedom of expression, freedom of speech, freedom of assembly, freedom to petition the government, freedom of religion, the right to bear arms", qBg: "Кои са две права на всеки, живеещ в САЩ?", aBg: "Свобода на изразяване, свобода на словото, свобода на събранията, свобода на религията" },
+    { id: 52, category: "government", q: "What do we show loyalty to when we say the Pledge of Allegiance?", a: "The United States, the flag", qBg: "На какво показваме лоялност, когато казваме Клетвата за вярност?", aBg: "Съединените щати, знамето" },
+    { id: 53, category: "government", q: "What is one promise you make when you become a United States citizen?", a: "Give up loyalty to other countries, defend the Constitution and laws of the United States, obey the laws of the United States, serve in the U.S. military if needed, serve the nation if needed, be loyal to the United States", qBg: "Какво е едно обещание, което давате, когато ставате гражданин на САЩ?", aBg: "Да се откажете от лоялност към други страни, да защитавате Конституцията, да спазвате законите" },
+    { id: 54, category: "government", q: "How old do citizens have to be to vote for President?", a: "18 and older", qBg: "На колко години трябва да са гражданите, за да гласуват за президент?", aBg: "18 и повече" },
+    { id: 55, category: "government", q: "What are two ways that Americans can participate in their democracy?", a: "Vote, join a political party, help with a campaign, join a civic group, join a community group, give an elected official your opinion, call Senators and Representatives, publicly support or oppose an issue or policy, run for office, write to a newspaper", qBg: "Кои са два начина, по които американците могат да участват в демокрацията си?", aBg: "Гласуване, присъединяване към политическа партия, помощ в кампания, присъединяване към обществена група" },
+    { id: 56, category: "government", q: "When is the last day you can send in federal income tax forms?", a: "April 15", qBg: "Кой е последният ден, в който можете да изпратите федералните данъчни формуляри?", aBg: "15 април" },
+    { id: 57, category: "government", q: "When must all men register for the Selective Service?", a: "At age 18, between 18 and 26", qBg: "Кога всички мъже трябва да се регистрират за Селективна служба?", aBg: "На 18 години, между 18 и 26" },
+
+    // AMERICAN HISTORY - Colonial Period and Independence
+    { id: 58, category: "history", q: "What is one reason colonists came to America?", a: "Freedom, political liberty, religious freedom, economic opportunity, escape persecution", qBg: "Каква е една причина колонистите да дойдат в Америка?", aBg: "Свобода, политическа свобода, религиозна свобода, икономически възможности" },
+    { id: 59, category: "history", q: "Who lived in America before the Europeans arrived?", a: "American Indians, Native Americans", qBg: "Кой е живял в Америка преди европейците да пристигнат?", aBg: "Американски индианци, коренни американци" },
+    { id: 60, category: "history", q: "What group of people was taken to America and sold as slaves?", a: "Africans, people from Africa", qBg: "Коя група хора бяха отведени в Америка и продадени като роби?", aBg: "Африканци, хора от Африка" },
+    { id: 61, category: "history", q: "Why did the colonists fight the British?", a: "Because of high taxes, because the British army stayed in their houses, because they didn't have self-government", qBg: "Защо колонистите се биха с британците?", aBg: "Заради високите данъци, защото нямаха самоуправление" },
+    { id: 62, category: "history", q: "Who wrote the Declaration of Independence?", a: "Thomas Jefferson", qBg: "Кой написа Декларацията за независимост?", aBg: "Томас Джеферсън" },
+    { id: 63, category: "history", q: "When was the Declaration of Independence adopted?", a: "July 4, 1776", qBg: "Кога беше приета Декларацията за независимост?", aBg: "4 юли 1776" },
+    { id: 64, category: "history", q: "There were 13 original states. Name three.", a: "New Hampshire, Massachusetts, Rhode Island, Connecticut, New York, New Jersey, Pennsylvania, Delaware, Maryland, Virginia, North Carolina, South Carolina, Georgia", qBg: "Имаше 13 първоначални щата. Назовете три.", aBg: "Ню Хемпшир, Масачузетс, Род Айланд, Кънектикът, Ню Йорк, Ню Джърси, Пенсилвания, Делауер, Мериленд, Вирджиния, Северна Каролина, Южна Каролина, Джорджия" },
+    { id: 65, category: "history", q: "What happened at the Constitutional Convention?", a: "The Constitution was written. The Founding Fathers wrote the Constitution.", qBg: "Какво се случи на Конституционния конвент?", aBg: "Конституцията беше написана. Бащите основатели написаха Конституцията." },
+    { id: 66, category: "history", q: "When was the Constitution written?", a: "1787", qBg: "Кога беше написана Конституцията?", aBg: "1787" },
+    { id: 67, category: "history", q: "The Federalist Papers supported the passage of the U.S. Constitution. Name one of the writers.", a: "James Madison, Alexander Hamilton, John Jay, Publius", qBg: "Федералистките документи подкрепиха приемането на Конституцията. Назовете един от авторите.", aBg: "Джеймс Мадисън, Александър Хамилтън, Джон Джей" },
+    { id: 68, category: "history", q: "What is one thing Benjamin Franklin is famous for?", a: "U.S. diplomat, oldest member of the Constitutional Convention, first Postmaster General, writer of Poor Richard's Almanac, started the first free libraries", qBg: "За какво е известен Бенджамин Франклин?", aBg: "Американски дипломат, най-възрастен член на Конституционния конвент, първи генерален пощенски директор" },
+    { id: 69, category: "history", q: "Who is the 'Father of Our Country'?", a: "George Washington", qBg: "Кой е 'Бащата на нашата страна'?", aBg: "Джордж Вашингтон" },
+    { id: 70, category: "history", q: "Who was the first President?", a: "George Washington", qBg: "Кой беше първият президент?", aBg: "Джордж Вашингтон" },
+
+    // 1800s
+    { id: 71, category: "history", q: "What territory did the United States buy from France in 1803?", a: "The Louisiana Territory, Louisiana", qBg: "Каква територия САЩ купиха от Франция през 1803?", aBg: "Територията Луизиана" },
+    { id: 72, category: "history", q: "Name one war fought by the United States in the 1800s.", a: "War of 1812, Mexican-American War, Civil War, Spanish-American War", qBg: "Назовете една война, водена от САЩ през 1800-те.", aBg: "Война от 1812, Мексикано-американска война, Гражданска война, Испано-американска война" },
+    { id: 73, category: "history", q: "Name the U.S. war between the North and the South.", a: "The Civil War, the War between the States", qBg: "Назовете американската война между Севера и Юга.", aBg: "Гражданската война" },
+    { id: 74, category: "history", q: "Name one problem that led to the Civil War.", a: "Slavery, economic reasons, states' rights", qBg: "Назовете един проблем, довел до Гражданската война.", aBg: "Робството, икономически причини, права на щатите" },
+    { id: 75, category: "history", q: "What was one important thing that Abraham Lincoln did?", a: "Freed the slaves (Emancipation Proclamation), saved (or preserved) the Union, led the United States during the Civil War", qBg: "Какво важно нещо направи Ейбрахам Линкълн?", aBg: "Освободи робите, спаси Съюза, ръководи САЩ по време на Гражданската война" },
+    { id: 76, category: "history", q: "What did the Emancipation Proclamation do?", a: "Freed the slaves, freed slaves in the Confederacy, freed slaves in the Confederate states, freed slaves in most Southern states", qBg: "Какво направи Прокламацията за еманципация?", aBg: "Освободи робите, освободи робите в Конфедерацията" },
+    { id: 77, category: "history", q: "What did Susan B. Anthony do?", a: "Fought for women's rights, fought for civil rights", qBg: "Какво направи Сюзън Б. Антъни?", aBg: "Бори се за правата на жените, бори се за граждански права" },
+
+    // Recent American History
+    { id: 78, category: "history", q: "Name one war fought by the United States in the 1900s.", a: "World War I, World War II, Korean War, Vietnam War, Gulf War", qBg: "Назовете една война, водена от САЩ през 1900-те.", aBg: "Първа световна война, Втора световна война, Корейска война, Виетнамска война, Война в Залива" },
+    { id: 79, category: "history", q: "Who was President during World War I?", a: "Woodrow Wilson", qBg: "Кой беше президент по време на Първата световна война?", aBg: "Удроу Уилсън" },
+    { id: 80, category: "history", q: "Who was President during the Great Depression and World War II?", a: "Franklin Roosevelt", qBg: "Кой беше президент по време на Голямата депресия и Втората световна война?", aBg: "Франклин Рузвелт" },
+    { id: 81, category: "history", q: "Who did the United States fight in World War II?", a: "Japan, Germany, and Italy", qBg: "С кого се биха САЩ във Втората световна война?", aBg: "Япония, Германия и Италия" },
+    { id: 82, category: "history", q: "Before he was President, Eisenhower was a general. What war was he in?", a: "World War II", qBg: "Преди да стане президент, Айзенхауер беше генерал. В коя война беше?", aBg: "Втората световна война" },
+    { id: 83, category: "history", q: "During the Cold War, what was the main concern of the United States?", a: "Communism", qBg: "По време на Студената война каква беше основната грижа на САЩ?", aBg: "Комунизмът" },
+    { id: 84, category: "history", q: "What movement tried to end racial discrimination?", a: "Civil rights movement", qBg: "Кое движение се опита да сложи край на расовата дискриминация?", aBg: "Движението за граждански права" },
+    { id: 85, category: "history", q: "What did Martin Luther King, Jr. do?", a: "Fought for civil rights, worked for equality for all Americans", qBg: "Какво направи Мартин Лутър Кинг-младши?", aBg: "Бори се за граждански права, работи за равенство за всички американци" },
+    { id: 86, category: "history", q: "What major event happened on September 11, 2001, in the United States?", a: "Terrorists attacked the United States", qBg: "Какво голямо събитие се случи на 11 септември 2001 г. в САЩ?", aBg: "Терористи атакуваха Съединените щати" },
+    { id: 87, category: "history", q: "Name one American Indian tribe in the United States.", a: "Cherokee, Navajo, Sioux, Chippewa, Choctaw, Pueblo, Apache, Iroquois, Creek, Blackfeet, Seminole, Cheyenne, Arawak, Shawnee, Mohegan, Huron, Oneida, Lakota, Crow, Teton, Hopi, Inuit", qBg: "Назовете едно индианско племе в САЩ.", aBg: "Чероки, Навахо, Сиукс, Чипева, Чокто, Пуебло, Апачи" },
+
+    // Geography
+    { id: 88, category: "geography", q: "Name one of the two longest rivers in the United States.", a: "Missouri River, Mississippi River", qBg: "Назовете една от двете най-дълги реки в САЩ.", aBg: "Река Мисури, река Мисисипи" },
+    { id: 89, category: "geography", q: "What ocean is on the West Coast of the United States?", a: "Pacific Ocean", qBg: "Кой океан е на западния бряг на САЩ?", aBg: "Тихият океан" },
+    { id: 90, category: "geography", q: "What ocean is on the East Coast of the United States?", a: "Atlantic Ocean", qBg: "Кой океан е на източния бряг на САЩ?", aBg: "Атлантическият океан" },
+    { id: 91, category: "geography", q: "Name one U.S. territory.", a: "Puerto Rico, U.S. Virgin Islands, American Samoa, Northern Mariana Islands, Guam", qBg: "Назовете една територия на САЩ.", aBg: "Пуерто Рико, Американски Вирджински острови, Американска Самоа, Гуам" },
+    { id: 92, category: "geography", q: "Name one state that borders Canada.", a: "Maine, New Hampshire, Vermont, New York, Pennsylvania, Ohio, Michigan, Minnesota, North Dakota, Montana, Idaho, Washington, Alaska", qBg: "Назовете един щат, който граничи с Канада.", aBg: "Мейн, Ню Хемпшир, Върмонт, Ню Йорк, Пенсилвания, Охайо, Мичиган, Минесота, Северна Дакота, Монтана, Айдахо, Вашингтон, Аляска" },
+    { id: 93, category: "geography", q: "Name one state that borders Mexico.", a: "California, Arizona, New Mexico, Texas", qBg: "Назовете един щат, който граничи с Мексико.", aBg: "Калифорния, Аризона, Ню Мексико, Тексас" },
+    { id: 94, category: "geography", q: "What is the capital of the United States?", a: "Washington, D.C.", qBg: "Коя е столицата на САЩ?", aBg: "Вашингтон, окръг Колумбия" },
+    { id: 95, category: "geography", q: "Where is the Statue of Liberty?", a: "New York Harbor, Liberty Island, New Jersey, near New York City, on the Hudson River", qBg: "Къде е Статуята на свободата?", aBg: "Пристанище Ню Йорк, остров Либърти" },
+
+    // Symbols and Holidays
+    { id: 96, category: "symbols", q: "Why does the flag have 13 stripes?", a: "Because there were 13 original colonies, because the stripes represent the original colonies", qBg: "Защо знамето има 13 ивици?", aBg: "Защото имаше 13 първоначални колонии" },
+    { id: 97, category: "symbols", q: "Why does the flag have 50 stars?", a: "Because there is one star for each state, because each star represents a state, because there are 50 states", qBg: "Защо знамето има 50 звезди?", aBg: "Защото има по една звезда за всеки щат, защото има 50 щата" },
+    { id: 98, category: "symbols", q: "What is the name of the national anthem?", a: "The Star-Spangled Banner", qBg: "Как се казва националният химн?", aBg: "Звездното знаме" },
+    { id: 99, category: "symbols", q: "When do we celebrate Independence Day?", a: "July 4", qBg: "Кога празнуваме Деня на независимостта?", aBg: "4 юли" },
+    { id: 100, category: "symbols", q: "Name two national U.S. holidays.", a: "New Year's Day, Martin Luther King Jr. Day, Presidents' Day, Memorial Day, Independence Day, Labor Day, Columbus Day, Veterans Day, Thanksgiving, Christmas", qBg: "Назовете два национални празника на САЩ.", aBg: "Нова година, Ден на Мартин Лутър Кинг, Ден на президентите, Ден на паметта, Ден на независимостта, Ден на труда, Ден на ветераните, Ден на благодарността, Коледа" }
+];
+
+// App State
+let currentQuestions = [];
+let currentIndex = 0;
+let isFlipped = false;
+let mode = 'flashcard';
+let showBulgarian = true;
+let correctCount = 0;
+let totalAnswered = 0;
+let timer = null;
+let timeLeft = 30;
+let synth = window.speechSynthesis;
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    // Preload voices
+    synth.getVoices();
+});
+
+function startStudy() {
+    const category = document.getElementById('categorySelect').value;
+    mode = document.getElementById('modeSelect').value;
+    showBulgarian = document.getElementById('langSelect').value === 'both';
+    
+    // Filter questions
+    if (category === 'all') {
+        currentQuestions = [...allQuestions];
+    } else {
+        currentQuestions = allQuestions.filter(q => q.category === category);
+    }
+    
+    // Shuffle for quiz mode
+    if (mode === 'quiz') {
+        currentQuestions = shuffleArray(currentQuestions).slice(0, 10);
+    } else {
+        currentQuestions = shuffleArray(currentQuestions);
+    }
+    
+    // Reset state
+    currentIndex = 0;
+    isFlipped = false;
+    correctCount = 0;
+    totalAnswered = 0;
+    
+    // Update UI
+    document.getElementById('setupCard').classList.add('hidden');
+    document.getElementById('progressCard').classList.remove('hidden');
+    document.getElementById('flashcardCard').classList.remove('hidden');
+    document.getElementById('resultsCard').classList.add('hidden');
+    
+    // Mode-specific setup
+    document.getElementById('modeText').textContent = 
+        mode === 'flashcard' ? 'Flashcard Mode' : 
+        mode === 'practice' ? 'Oral Practice Mode' : 
+        'Quiz Mode (10 Questions)';
+    
+    if (mode === 'practice') {
+        document.getElementById('practiceTimer').classList.remove('hidden');
+        document.getElementById('navButtons').classList.add('hidden');
+        document.getElementById('practiceFeedback').classList.remove('hidden');
+    } else {
+        document.getElementById('practiceTimer').classList.add('hidden');
+        document.getElementById('navButtons').classList.remove('hidden');
+        document.getElementById('practiceFeedback').classList.add('hidden');
+    }
+    
+    showCard();
+}
+
+function showCard() {
+    if (currentIndex >= currentQuestions.length) {
+        endSession();
+        return;
+    }
+    
+    const q = currentQuestions[currentIndex];
+    isFlipped = false;
+    
+    // Update question side
+    document.getElementById('questionNumber').textContent = `${currentIndex + 1} / ${currentQuestions.length}`;
+    document.getElementById('categoryTag').textContent = q.category.charAt(0).toUpperCase() + q.category.slice(1);
+    document.getElementById('questionText').textContent = q.q;
+    document.getElementById('questionBulgarian').textContent = showBulgarian ? q.qBg : '';
+    document.getElementById('questionBulgarian').style.display = showBulgarian ? 'block' : 'none';
+    
+    // Update answer side
+    document.getElementById('answerQuestionText').textContent = q.q;
+    document.getElementById('answerText').textContent = q.a;
+    document.getElementById('answerBulgarian').textContent = showBulgarian ? q.aBg : '';
+    document.getElementById('answerBulgarian').style.display = showBulgarian ? 'block' : 'none';
+    
+    // Show question side
+    document.getElementById('questionSide').classList.remove('hidden');
+    document.getElementById('answerSide').classList.add('hidden');
+    
+    // Update progress
+    updateProgress();
+    
+    // Start timer for practice mode
+    if (mode === 'practice') {
+        startTimer();
+        // Auto-play question
+        setTimeout(() => speakQuestion(), 500);
+    }
+}
+
+function flipCard() {
+    isFlipped = !isFlipped;
+    
+    if (isFlipped) {
+        document.getElementById('questionSide').classList.add('hidden');
+        document.getElementById('answerSide').classList.remove('hidden');
+        if (mode === 'practice') {
+            stopTimer();
+        }
+    } else {
+        document.getElementById('questionSide').classList.remove('hidden');
+        document.getElementById('answerSide').classList.add('hidden');
+    }
+}
+
+function prevCard() {
+    if (currentIndex > 0) {
+        currentIndex--;
+        showCard();
+    }
+}
+
+function nextCard() {
+    currentIndex++;
+    showCard();
+}
+
+function markCorrect() {
+    correctCount++;
+    totalAnswered++;
+    updateProgress();
+    nextCard();
+}
+
+function markIncorrect() {
+    totalAnswered++;
+    updateProgress();
+    nextCard();
+}
+
+function updateProgress() {
+    const progress = ((currentIndex + 1) / currentQuestions.length) * 100;
+    document.getElementById('progressFill').style.width = progress + '%';
+    document.getElementById('progressText').textContent = `Question ${currentIndex + 1} of ${currentQuestions.length}`;
+    document.getElementById('correctStat').textContent = correctCount;
+    document.getElementById('totalStat').textContent = totalAnswered;
+    
+    if (totalAnswered > 0) {
+        const accuracy = Math.round((correctCount / totalAnswered) * 100);
+        document.getElementById('accuracyStat').textContent = accuracy + '%';
+    }
+}
+
+function startTimer() {
+    stopTimer();
+    timeLeft = 30;
+    document.getElementById('timerDisplay').textContent = timeLeft;
+    
+    timer = setInterval(() => {
+        timeLeft--;
+        document.getElementById('timerDisplay').textContent = timeLeft;
+        
+        if (timeLeft <= 0) {
+            stopTimer();
+            flipCard(); // Show answer when time runs out
+        }
+    }, 1000);
+}
+
+function stopTimer() {
+    if (timer) {
+        clearInterval(timer);
+        timer = null;
+    }
+}
+
+function speakQuestion(slow = false) {
+    const q = currentQuestions[currentIndex];
+    speak(q.q, slow);
+}
+
+function speakAnswer(slow = false) {
+    const q = currentQuestions[currentIndex];
+    speak(q.a, slow);
+}
+
+function speak(text, slow = false) {
+    synth.cancel(); // Stop any current speech
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
+    utterance.rate = slow ? 0.6 : 0.85; // Slower than normal for learners
+    utterance.pitch = 1;
+    
+    // Try to get a good US English voice
+    const voices = synth.getVoices();
+    const usVoice = voices.find(v => v.lang === 'en-US' && v.name.includes('Female')) ||
+                    voices.find(v => v.lang === 'en-US') ||
+                    voices.find(v => v.lang.startsWith('en'));
+    if (usVoice) {
+        utterance.voice = usVoice;
+    }
+    
+    // Visual feedback
+    const btn = document.getElementById('playQuestionBtn');
+    btn.classList.add('speaking');
+    utterance.onend = () => btn.classList.remove('speaking');
+    
+    synth.speak(utterance);
+}
+
+function endSession() {
+    stopTimer();
+    synth.cancel();
+    
+    document.getElementById('flashcardCard').classList.add('hidden');
+    document.getElementById('resultsCard').classList.remove('hidden');
+    
+    document.getElementById('finalCorrect').textContent = correctCount;
+    document.getElementById('finalTotal').textContent = totalAnswered || currentQuestions.length;
+    
+    const accuracy = totalAnswered > 0 ? Math.round((correctCount / totalAnswered) * 100) : 0;
+    document.getElementById('finalAccuracy').textContent = accuracy + '%';
+    
+    let message = '';
+    if (accuracy >= 80) {
+        message = "Excellent! You're doing great! / Отлично! Справяте се страхотно!";
+    } else if (accuracy >= 60) {
+        message = "Good progress! Keep practicing! / Добър напредък! Продължавайте да практикувате!";
+    } else {
+        message = "Keep studying, you'll get there! / Продължавайте да учите!";
+    }
+    document.getElementById('resultMessage').textContent = message;
+}
+
+function resetAll() {
+    stopTimer();
+    synth.cancel();
+    
+    document.getElementById('setupCard').classList.remove('hidden');
+    document.getElementById('progressCard').classList.add('hidden');
+    document.getElementById('flashcardCard').classList.add('hidden');
+    document.getElementById('resultsCard').classList.add('hidden');
+}
+
+function shuffleArray(array) {
+    const newArray = [...array];
+    for (let i = newArray.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+    }
+    return newArray;
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+    if (document.getElementById('flashcardCard').classList.contains('hidden')) return;
+    
+    if (e.code === 'Space') {
+        e.preventDefault();
+        flipCard();
+    } else if (e.code === 'ArrowRight') {
+        nextCard();
+    } else if (e.code === 'ArrowLeft') {
+        prevCard();
+    } else if (e.code === 'KeyP') {
+        speakQuestion();
+    }
+});
+
+// Click to flip
+document.getElementById('flashcardArea')?.addEventListener('click', (e) => {
+    if (!e.target.closest('.audio-btn') && !e.target.closest('button')) {
+        flipCard();
+    }
+});
+</script>
+</body>
+</html>
