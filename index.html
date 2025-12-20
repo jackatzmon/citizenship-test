@@ -344,6 +344,19 @@
                         </button>
                     </div>
                 </div>
+                
+                <div id="statsInfo" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
+                    <p style="font-size: 0.9rem; color: var(--text-medium); margin-bottom: 0.5rem;">
+                        📊 <strong>Smart Practice:</strong> Questions you get wrong will appear more often!
+                        <br><span style="font-style: italic;">Въпросите, на които грешите, ще се появяват по-често!</span>
+                    </p>
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+                        <span id="statsDisplay" style="font-size: 0.85rem; color: var(--text-medium);"></span>
+                        <button class="btn btn-outline" onclick="resetStats()" style="width: auto; padding: 0.5rem 1rem; font-size: 0.85rem;">
+                            Reset Progress / Нулиране
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -637,6 +650,82 @@ let timer = null;
 let timeLeft = 30;
 let synth = window.speechSynthesis;
 
+// Spaced repetition tracking
+let questionStats = {}; // { questionId: { correct: 0, wrong: 0, lastSeen: timestamp } }
+let questionQueue = []; // Weighted queue for spaced repetition
+
+// Load saved stats from localStorage
+function loadStats() {
+    try {
+        const saved = localStorage.getItem('citizenshipTestStats');
+        if (saved) {
+            questionStats = JSON.parse(saved);
+        }
+    } catch (e) {
+        console.log('Could not load stats:', e);
+    }
+}
+
+// Save stats to localStorage
+function saveStats() {
+    try {
+        localStorage.setItem('citizenshipTestStats', JSON.stringify(questionStats));
+    } catch (e) {
+        console.log('Could not save stats:', e);
+    }
+}
+
+// Calculate priority weight for a question (higher = show more often)
+function getQuestionWeight(questionId) {
+    const stats = questionStats[questionId];
+    if (!stats) return 5; // New question - medium priority
+    
+    const totalAttempts = stats.correct + stats.wrong;
+    if (totalAttempts === 0) return 5;
+    
+    const accuracy = stats.correct / totalAttempts;
+    
+    // Wrong answers get much higher weight (shown more often)
+    // accuracy 0% = weight 10, accuracy 100% = weight 1
+    let weight = Math.round(10 - (accuracy * 9));
+    
+    // Boost weight for recently wrong answers
+    if (stats.wrong > stats.correct) {
+        weight += 3;
+    }
+    
+    // Minimum weight of 1 so correct answers still appear occasionally
+    return Math.max(1, Math.min(15, weight));
+}
+
+// Build weighted queue based on performance
+function buildWeightedQueue(questions) {
+    questionQueue = [];
+    
+    for (const q of questions) {
+        const weight = getQuestionWeight(q.id);
+        // Add question multiple times based on weight
+        for (let i = 0; i < weight; i++) {
+            questionQueue.push(q);
+        }
+    }
+    
+    // Shuffle the weighted queue
+    questionQueue = shuffleArray(questionQueue);
+    
+    // Remove consecutive duplicates
+    const deduped = [];
+    let lastId = null;
+    for (const q of questionQueue) {
+        if (q.id !== lastId) {
+            deduped.push(q);
+            lastId = q.id;
+        }
+    }
+    
+    return deduped;
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     // Preload voices
@@ -648,18 +737,24 @@ function startStudy() {
     mode = document.getElementById('modeSelect').value;
     showBulgarian = document.getElementById('langSelect').value === 'both';
     
+    // Load saved performance stats
+    loadStats();
+    
     // Filter questions
+    let filteredQuestions;
     if (category === 'all') {
-        currentQuestions = [...allQuestions];
+        filteredQuestions = [...allQuestions];
     } else {
-        currentQuestions = allQuestions.filter(q => q.category === category);
+        filteredQuestions = allQuestions.filter(q => q.category === category);
     }
     
-    // Shuffle for quiz mode
+    // Build weighted queue (wrong answers appear more often)
     if (mode === 'quiz') {
-        currentQuestions = shuffleArray(currentQuestions).slice(0, 10);
+        // For quiz, just pick 10 random (weighted toward weak areas)
+        currentQuestions = buildWeightedQueue(filteredQuestions).slice(0, 10);
     } else {
-        currentQuestions = shuffleArray(currentQuestions);
+        // For flashcard/practice, use full weighted queue
+        currentQuestions = buildWeightedQueue(filteredQuestions);
     }
     
     // Reset state
@@ -771,6 +866,7 @@ function nextCard() {
 }
 
 function markCorrect() {
+    trackAnswer(true);
     correctCount++;
     totalAnswered++;
     updateProgress();
@@ -778,12 +874,14 @@ function markCorrect() {
 }
 
 function markIncorrect() {
+    trackAnswer(false);
     totalAnswered++;
     updateProgress();
     nextCard();
 }
 
 function markCorrectAndNext() {
+    trackAnswer(true);
     correctCount++;
     totalAnswered++;
     updateProgress();
@@ -791,9 +889,29 @@ function markCorrectAndNext() {
 }
 
 function markIncorrectAndNext() {
+    trackAnswer(false);
     totalAnswered++;
     updateProgress();
     nextCard();
+}
+
+function trackAnswer(wasCorrect) {
+    const q = currentQuestions[currentIndex];
+    if (!q) return;
+    
+    if (!questionStats[q.id]) {
+        questionStats[q.id] = { correct: 0, wrong: 0, lastSeen: Date.now() };
+    }
+    
+    if (wasCorrect) {
+        questionStats[q.id].correct++;
+    } else {
+        questionStats[q.id].wrong++;
+    }
+    questionStats[q.id].lastSeen = Date.now();
+    
+    // Save to localStorage
+    saveStats();
 }
 
 function updateProgress() {
@@ -919,7 +1037,43 @@ function toggleRecording() {
 // Initialize on load
 document.addEventListener('DOMContentLoaded', () => {
     initSpeechRecognition();
+    loadStats();
+    updateStatsDisplay();
 });
+
+function updateStatsDisplay() {
+    const totalQuestions = Object.keys(questionStats).length;
+    if (totalQuestions === 0) {
+        document.getElementById('statsDisplay').textContent = 'No practice history yet.';
+        return;
+    }
+    
+    let totalCorrect = 0;
+    let totalWrong = 0;
+    let weakQuestions = 0;
+    
+    for (const id in questionStats) {
+        totalCorrect += questionStats[id].correct;
+        totalWrong += questionStats[id].wrong;
+        if (questionStats[id].wrong > questionStats[id].correct) {
+            weakQuestions++;
+        }
+    }
+    
+    const total = totalCorrect + totalWrong;
+    const accuracy = total > 0 ? Math.round((totalCorrect / total) * 100) : 0;
+    
+    document.getElementById('statsDisplay').textContent = 
+        `Practiced: ${totalQuestions} questions | Accuracy: ${accuracy}% | Need work: ${weakQuestions}`;
+}
+
+function resetStats() {
+    if (confirm('Reset all progress? This cannot be undone.\n\nНулиране на напредъка? Това не може да бъде отменено.')) {
+        questionStats = {};
+        saveStats();
+        updateStatsDisplay();
+    }
+}
 
 function loadVoices() {
     const voices = synth.getVoices();
@@ -1013,6 +1167,8 @@ function resetAll() {
     document.getElementById('progressCard').classList.add('hidden');
     document.getElementById('flashcardCard').classList.add('hidden');
     document.getElementById('resultsCard').classList.add('hidden');
+    
+    updateStatsDisplay();
 }
 
 function shuffleArray(array) {
