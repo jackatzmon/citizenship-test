@@ -1079,20 +1079,33 @@ function loadVoices() {
     const voices = synth.getVoices();
     if (voices.length === 0) return;
     
-    // Prefer natural/premium male US English voices
+    // Log available voices for debugging
+    console.log('Available voices:', voices.map(v => `${v.name} (${v.lang})`));
+    
+    // Priority order - iOS/Safari premium voices first
     const preferredVoices = [
+        // iOS Premium/Enhanced voices (sound most natural)
+        'Samantha',           // iOS default, very natural
+        'Aaron',              // iOS male voice
+        'Daniel',             // British but clear
+        'Fred',               // iOS male
+        'Tom',                // iOS male
+        // macOS voices
+        'Alex',               // macOS male, good quality
+        // Google voices (Chrome)
         'Google US English',
+        // Microsoft voices (Windows/Edge)
         'Microsoft David',
-        'David',
-        'Alex',
-        'Daniel',
         'Microsoft Mark',
-        'English United States',
+        'David',
     ];
     
     // Try to find a preferred voice
     for (const name of preferredVoices) {
-        const voice = voices.find(v => v.name.includes(name) && v.lang.startsWith('en'));
+        const voice = voices.find(v => 
+            v.name.includes(name) && 
+            (v.lang.startsWith('en') || v.lang === '')
+        );
         if (voice) {
             selectedVoice = voice;
             console.log('Selected voice:', voice.name);
@@ -1100,38 +1113,47 @@ function loadVoices() {
         }
     }
     
-    // Fallback: any US English male voice, then any US English voice
-    selectedVoice = voices.find(v => v.lang === 'en-US' && /male|david|mark|james|john|daniel/i.test(v.name)) ||
-                    voices.find(v => v.lang === 'en-US') ||
-                    voices.find(v => v.lang.startsWith('en'));
+    // Fallback: any English voice
+    selectedVoice = voices.find(v => v.lang === 'en-US') ||
+                    voices.find(v => v.lang.startsWith('en')) ||
+                    voices[0];
     
     if (selectedVoice) console.log('Fallback voice:', selectedVoice.name);
 }
 
-// Load voices when available
+// Load voices - iOS needs a slight delay
 synth.onvoiceschanged = loadVoices;
+setTimeout(loadVoices, 100);
+setTimeout(loadVoices, 500);
 loadVoices();
 
 function speak(text, slow = false) {
     synth.cancel(); // Stop any current speech
     
+    // Reload voices if needed (iOS sometimes needs this)
+    if (!selectedVoice) {
+        loadVoices();
+    }
+    
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'en-US';
-    utterance.rate = slow ? 0.55 : 0.75; // Slower for ESL learners
-    utterance.pitch = 0.95; // Slightly lower pitch for more natural male sound
+    utterance.rate = slow ? 0.5 : 0.7; // Slower for clearer pronunciation
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
     
-    // Use selected voice or try to find one
-    if (!selectedVoice) loadVoices();
     if (selectedVoice) {
         utterance.voice = selectedVoice;
     }
     
     // Visual feedback
     const btn = document.getElementById('playQuestionBtn');
-    btn.classList.add('speaking');
-    utterance.onend = () => btn.classList.remove('speaking');
-    utterance.onerror = () => btn.classList.remove('speaking');
+    if (btn) {
+        btn.classList.add('speaking');
+        utterance.onend = () => btn.classList.remove('speaking');
+        utterance.onerror = () => btn.classList.remove('speaking');
+    }
     
+    // iOS fix: need to speak in response to user action
     synth.speak(utterance);
 }
 
