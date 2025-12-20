@@ -393,17 +393,36 @@
                             <button class="audio-btn" onclick="speakQuestion(true)" style="background: var(--primary-blue);">
                                 🐢 Slow / Бавно
                             </button>
+                            <button class="audio-btn" id="recordBtn" onclick="toggleRecording()" style="background: var(--accent-red);">
+                                🎤 Answer / Отговори
+                            </button>
                         </div>
                         
-                        <p class="flip-hint">Click anywhere or press Space to reveal answer<br>
+                        <div id="answerSection" class="hidden" style="margin-top: 1.5rem; width: 100%;">
+                            <div style="background: var(--light-gray); padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
+                                <p style="font-size: 0.85rem; color: var(--text-medium); margin-bottom: 0.5rem;">Your answer / Вашият отговор:</p>
+                                <p id="userAnswer" style="font-size: 1.2rem; color: var(--text-dark); min-height: 1.5rem;"></p>
+                            </div>
+                        </div>
+                        
+                        <p class="flip-hint">Click card or press Space to see correct answer<br>
                         <span style="font-style: italic;">Щракнете за отговора</span></p>
                     </div>
                     
                     <!-- Answer Side -->
                     <div id="answerSide" class="hidden">
-                        <div class="question-text" style="font-size: 1.3rem; color: var(--text-medium);" id="answerQuestionText"></div>
-                        <div class="answer-text" id="answerText"></div>
-                        <div class="bulgarian-text" id="answerBulgarian"></div>
+                        <div id="userAnswerCompare" style="background: #fef3c7; padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; width: 100%; display: none;">
+                            <p style="font-size: 0.85rem; color: var(--warning-amber); margin-bottom: 0.5rem; font-weight: 600;">YOUR ANSWER / ВАШИЯТ ОТГОВОР:</p>
+                            <p id="userAnswerDisplay" style="font-size: 1.1rem; color: var(--text-dark);"></p>
+                        </div>
+                        
+                        <div style="background: #d1fae5; padding: 1rem; border-radius: 12px; margin-bottom: 1rem; width: 100%;">
+                            <p style="font-size: 0.85rem; color: var(--success-green); margin-bottom: 0.5rem; font-weight: 600;">✓ CORRECT ANSWER / ПРАВИЛЕН ОТГОВОР:</p>
+                            <p class="answer-text" id="answerText" style="margin: 0;"></p>
+                            <p class="bulgarian-text" id="answerBulgarian" style="border-top: none; padding-top: 0.5rem;"></p>
+                        </div>
+                        
+                        <div class="question-text" style="font-size: 1.1rem; color: var(--text-medium); margin-top: 1rem;" id="answerQuestionText"></div>
                         
                         <div class="audio-controls">
                             <button class="audio-btn" onclick="speakAnswer()">
@@ -671,6 +690,10 @@ function showCard() {
     const q = currentQuestions[currentIndex];
     isFlipped = false;
     
+    // Clear user's previous answer
+    document.getElementById('userAnswer').textContent = '';
+    document.getElementById('answerSection').classList.add('hidden');
+    
     // Update question side
     document.getElementById('questionNumber').textContent = `${currentIndex + 1} / ${currentQuestions.length}`;
     document.getElementById('categoryTag').textContent = q.category.charAt(0).toUpperCase() + q.category.slice(1);
@@ -703,6 +726,15 @@ function flipCard() {
     isFlipped = !isFlipped;
     
     if (isFlipped) {
+        // Show user's answer if they recorded one
+        const userAnswer = document.getElementById('userAnswer').textContent;
+        if (userAnswer && userAnswer !== '' && userAnswer !== 'Listening... / Слушам...') {
+            document.getElementById('userAnswerDisplay').textContent = userAnswer;
+            document.getElementById('userAnswerCompare').style.display = 'block';
+        } else {
+            document.getElementById('userAnswerCompare').style.display = 'none';
+        }
+        
         document.getElementById('questionSide').classList.add('hidden');
         document.getElementById('answerSide').classList.remove('hidden');
         if (mode === 'practice') {
@@ -786,6 +818,83 @@ function speakAnswer(slow = false) {
 }
 
 let selectedVoice = null;
+let recognition = null;
+let isRecording = false;
+
+// Initialize speech recognition
+function initSpeechRecognition() {
+    if ('webkitSpeechRecognition' in window) {
+        recognition = new webkitSpeechRecognition();
+    } else if ('SpeechRecognition' in window) {
+        recognition = new SpeechRecognition();
+    } else {
+        console.log('Speech recognition not supported');
+        return;
+    }
+    
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+    
+    recognition.onresult = (event) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            transcript += event.results[i][0].transcript;
+        }
+        document.getElementById('userAnswer').textContent = transcript;
+        document.getElementById('answerSection').classList.remove('hidden');
+    };
+    
+    recognition.onend = () => {
+        isRecording = false;
+        const btn = document.getElementById('recordBtn');
+        btn.textContent = '🎤 Answer / Отговори';
+        btn.classList.remove('speaking');
+    };
+    
+    recognition.onerror = (event) => {
+        console.log('Speech recognition error:', event.error);
+        isRecording = false;
+        const btn = document.getElementById('recordBtn');
+        btn.textContent = '🎤 Answer / Отговори';
+        btn.classList.remove('speaking');
+        
+        if (event.error === 'not-allowed') {
+            alert('Please allow microphone access to record your answer.\n\nМоля, разрешете достъп до микрофона.');
+        }
+    };
+}
+
+function toggleRecording() {
+    if (!recognition) {
+        initSpeechRecognition();
+        if (!recognition) {
+            alert('Speech recognition is not supported in this browser. Please use Chrome.\n\nРазпознаването на реч не се поддържа. Моля, използвайте Chrome.');
+            return;
+        }
+    }
+    
+    if (isRecording) {
+        recognition.stop();
+        isRecording = false;
+    } else {
+        // Clear previous answer
+        document.getElementById('userAnswer').textContent = 'Listening... / Слушам...';
+        document.getElementById('answerSection').classList.remove('hidden');
+        
+        const btn = document.getElementById('recordBtn');
+        btn.textContent = '⏹ Stop / Спри';
+        btn.classList.add('speaking');
+        
+        recognition.start();
+        isRecording = true;
+    }
+}
+
+// Initialize on load
+document.addEventListener('DOMContentLoaded', () => {
+    initSpeechRecognition();
+});
 
 function loadVoices() {
     const voices = synth.getVoices();
