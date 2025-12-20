@@ -411,6 +411,15 @@
                             </button>
                         </div>
                         
+                        <div id="recordingStatus" class="hidden" style="margin-top: 1rem; text-align: center;">
+                            <p style="color: var(--accent-red); font-weight: 600; animation: pulse 1s infinite;">
+                                🔴 Recording... Tap "Stop" when done
+                            </p>
+                            <button class="btn btn-warning" onclick="stopRecording()" style="width: auto; margin-top: 0.5rem;">
+                                ⏹ Stop Recording / Спри
+                            </button>
+                        </div>
+                        
                         <div id="answerSection" class="hidden" style="margin-top: 1.5rem; width: 100%;">
                             <div style="background: var(--light-gray); padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
                                 <p style="font-size: 0.85rem; color: var(--text-medium); margin-bottom: 0.5rem;">Your answer / Вашият отговор:</p>
@@ -989,18 +998,12 @@ function initSpeechRecognition() {
     };
     
     recognition.onend = () => {
-        isRecording = false;
-        const btn = document.getElementById('recordBtn');
-        btn.textContent = '🎤 Answer / Отговори';
-        btn.classList.remove('speaking');
+        stopRecording();
     };
     
     recognition.onerror = (event) => {
         console.log('Speech recognition error:', event.error);
-        isRecording = false;
-        const btn = document.getElementById('recordBtn');
-        btn.textContent = '🎤 Answer / Отговори';
-        btn.classList.remove('speaking');
+        stopRecording();
         
         if (event.error === 'not-allowed') {
             alert('Please allow microphone access to record your answer.\n\nМоля, разрешете достъп до микрофона.');
@@ -1011,26 +1014,53 @@ function initSpeechRecognition() {
 function toggleRecording() {
     if (!recognition) {
         initSpeechRecognition();
-        if (!recognition) {
-            alert('Speech recognition is not supported in this browser. Please use Chrome.\n\nРазпознаването на реч не се поддържа. Моля, използвайте Chrome.');
-            return;
-        }
+    }
+    
+    if (!recognition) {
+        // Speech recognition not supported (iPhone Safari)
+        alert('Speech recognition is not supported in Safari on iPhone.\n\nPractice tip: Say your answer out loud, then flip the card to check!\n\nСъвет: Кажете отговора си на глас, след това обърнете картата!');
+        return;
     }
     
     if (isRecording) {
-        recognition.stop();
-        isRecording = false;
+        stopRecording();
     } else {
-        // Clear previous answer
-        document.getElementById('userAnswer').textContent = 'Listening... / Слушам...';
-        document.getElementById('answerSection').classList.remove('hidden');
-        
-        const btn = document.getElementById('recordBtn');
-        btn.textContent = '⏹ Stop / Спри';
-        btn.classList.add('speaking');
-        
+        startRecording();
+    }
+}
+
+function startRecording() {
+    if (!recognition) return;
+    
+    document.getElementById('userAnswer').textContent = 'Listening... / Слушам...';
+    document.getElementById('answerSection').classList.remove('hidden');
+    document.getElementById('recordingStatus').classList.remove('hidden');
+    
+    const btn = document.getElementById('recordBtn');
+    btn.innerHTML = '🔴 Recording...';
+    btn.classList.add('speaking');
+    
+    try {
         recognition.start();
         isRecording = true;
+    } catch (e) {
+        console.log('Recognition error:', e);
+        stopRecording();
+    }
+}
+
+function stopRecording() {
+    if (recognition && isRecording) {
+        recognition.stop();
+    }
+    isRecording = false;
+    
+    document.getElementById('recordingStatus').classList.add('hidden');
+    
+    const btn = document.getElementById('recordBtn');
+    if (btn) {
+        btn.innerHTML = '🎤 Answer / Отговори';
+        btn.classList.remove('speaking');
     }
 }
 
