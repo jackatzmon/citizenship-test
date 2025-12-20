@@ -432,6 +432,18 @@
                                 🐢 Slow
                             </button>
                         </div>
+                        
+                        <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 2px dashed #e2e8f0; width: 100%;">
+                            <p style="font-size: 0.9rem; color: var(--text-medium); margin-bottom: 1rem;">How did you do? / Как се справихте?</p>
+                            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                                <button class="btn btn-success" onclick="markCorrectAndNext()" style="width: auto; padding: 0.75rem 1.5rem;">
+                                    ✓ Correct / Вярно
+                                </button>
+                                <button class="btn btn-warning" onclick="markIncorrectAndNext()" style="width: auto; padding: 0.75rem 1.5rem;">
+                                    ✗ Wrong / Грешно
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
@@ -766,6 +778,19 @@ function markCorrect() {
 }
 
 function markIncorrect() {
+    totalAnswered++;
+    updateProgress();
+    nextCard();
+}
+
+function markCorrectAndNext() {
+    correctCount++;
+    totalAnswered++;
+    updateProgress();
+    nextCard();
+}
+
+function markIncorrectAndNext() {
     totalAnswered++;
     updateProgress();
     nextCard();
