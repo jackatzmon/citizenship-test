@@ -1072,16 +1072,15 @@ function speakQuestion(slow = false) {
     const q = currentQuestions[currentIndex];
     if (!q) return;
     const settings = getVoiceSettings();
-    const enVoice = settings.elEnVoice || '21m00Tcm4TlvDq8ikWAM';
+    const enVoice = settings.elEnVoice;
     const bgVoice = settings.elBgVoice;
 
     if (settings.elApiKey && !isOffline) {
-        speakEL(q.q, enVoice, slow, settings.elApiKey).then(() => {
+        speakEL(q.q, enVoice, slow, settings.elApiKey, 1.4).then(() => {
             if (showBulgarian && bgVoice && q.qBg) {
-                return speakEL(q.qBg, bgVoice, slow, settings.elApiKey);
+                return speakEL(q.qBg, bgVoice, slow, settings.elApiKey, 0.8);
             }
         }).catch(() => {
-            // fallback to browser TTS
             speakBrowser(q.q, slow, 'en-US');
         });
     } else {
@@ -1093,13 +1092,13 @@ function speakAnswer(slow = false) {
     const q = currentQuestions[currentIndex];
     if (!q) return;
     const settings = getVoiceSettings();
-    const enVoice = settings.elEnVoice || '21m00Tcm4TlvDq8ikWAM';
+    const enVoice = settings.elEnVoice;
     const bgVoice = settings.elBgVoice;
 
     if (settings.elApiKey && !isOffline) {
-        speakEL(q.a, enVoice, slow, settings.elApiKey).then(() => {
+        speakEL(q.a, enVoice, slow, settings.elApiKey, 1.4).then(() => {
             if (showBulgarian && bgVoice && q.aBg) {
-                return speakEL(q.aBg, bgVoice, slow, settings.elApiKey);
+                return speakEL(q.aBg, bgVoice, slow, settings.elApiKey, 0.8);
             }
         }).catch(() => {
             speakBrowser(q.a, slow, 'en-US');
@@ -1537,18 +1536,34 @@ function resetStats() {
 }
 
 // ---- Voice Settings ----
+const DEFAULT_VOICE_SETTINGS = {
+    elApiKey: 'PASTE_YOUR_ELEVENLABS_API_KEY_HERE',
+    elEnVoice: 'W78pxv1enhu0qj6t6IaC',
+    elBgVoice: 'PASTE_YOUR_BULGARIAN_VOICE_ID_HERE',
+    assemblyAiKey: 'PASTE_YOUR_ASSEMBLYAI_API_KEY_HERE'
+};
+
 function getVoiceSettings() {
     try {
         const raw = localStorage.getItem('citizenshipVoiceSettings');
-        if (raw) return JSON.parse(raw);
+        if (raw) {
+            const saved = JSON.parse(raw);
+            // Use saved values only if non-empty, otherwise fall back to defaults
+            return {
+                elApiKey: saved.elApiKey || DEFAULT_VOICE_SETTINGS.elApiKey,
+                elEnVoice: saved.elEnVoice || DEFAULT_VOICE_SETTINGS.elEnVoice,
+                elBgVoice: saved.elBgVoice || DEFAULT_VOICE_SETTINGS.elBgVoice,
+                assemblyAiKey: saved.assemblyAiKey || DEFAULT_VOICE_SETTINGS.assemblyAiKey
+            };
+        }
     } catch (e) { /* ignore */ }
-    return { elApiKey: '', elEnVoice: '21m00Tcm4TlvDq8ikWAM', elBgVoice: '', assemblyAiKey: '' };
+    return { ...DEFAULT_VOICE_SETTINGS };
 }
 
 function openSettings() {
     const s = getVoiceSettings();
     document.getElementById('elApiKey').value = s.elApiKey || '';
-    document.getElementById('elEnVoice').value = s.elEnVoice || '21m00Tcm4TlvDq8ikWAM';
+    document.getElementById('elEnVoice').value = s.elEnVoice || '';
     document.getElementById('elBgVoice').value = s.elBgVoice || '';
     document.getElementById('assemblyAiKey').value = s.assemblyAiKey || '';
     document.getElementById('settingsModal').classList.remove('hidden');
@@ -1561,7 +1576,7 @@ function closeSettings() {
 function saveSettings() {
     const settings = {
         elApiKey: document.getElementById('elApiKey').value.trim(),
-        elEnVoice: document.getElementById('elEnVoice').value.trim() || '21m00Tcm4TlvDq8ikWAM',
+        elEnVoice: document.getElementById('elEnVoice').value.trim(),
         elBgVoice: document.getElementById('elBgVoice').value.trim(),
         assemblyAiKey: document.getElementById('assemblyAiKey').value.trim()
     };
@@ -1580,7 +1595,7 @@ function stopCurrentAudio() {
     synth.cancel();
 }
 
-function speakEL(text, voiceId, slow, apiKey) {
+function speakEL(text, voiceId, slow, apiKey, volume = 1.0) {
     stopCurrentAudio();
 
     const speed = slow ? 0.65 : 1.0;
@@ -1588,7 +1603,7 @@ function speakEL(text, voiceId, slow, apiKey) {
 
     // Check cache
     if (audioCache.has(cacheKey)) {
-        return playBlobUrl(audioCache.get(cacheKey));
+        return playBlobUrl(audioCache.get(cacheKey), volume);
     }
 
     // Visual feedback
@@ -1618,16 +1633,17 @@ function speakEL(text, voiceId, slow, apiKey) {
     .then(blob => {
         const url = URL.createObjectURL(blob);
         audioCache.set(cacheKey, url);
-        return playBlobUrl(url);
+        return playBlobUrl(url, volume);
     })
     .finally(() => {
         if (btn) btn.classList.remove('speaking');
     });
 }
 
-function playBlobUrl(url) {
+function playBlobUrl(url, volume = 1.0) {
     return new Promise((resolve, reject) => {
         const audio = new Audio(url);
+        audio.volume = Math.min(volume, 1.0);
         currentAudio = audio;
         audio.onended = () => { currentAudio = null; resolve(); };
         audio.onerror = (e) => { currentAudio = null; reject(e); };
