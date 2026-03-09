@@ -292,6 +292,60 @@
             margin-bottom: 1rem;
         }
 
+        .settings-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .settings-btn:hover { background: rgba(255,255,255,0.35); transform: rotate(45deg); }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-overlay.hidden { display: none !important; }
+        .modal {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 480px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .modal h2 { color: var(--primary-blue); margin-bottom: 1.5rem; font-family: 'Crimson Text', serif; }
+        .modal label { display: block; font-weight: 600; margin-bottom: 0.3rem; font-size: 0.9rem; color: var(--text-dark); }
+        .modal input[type="text"], .modal input[type="password"] {
+            width: 100%;
+            padding: 0.6rem 0.8rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            margin-bottom: 1rem;
+            transition: border-color 0.2s;
+        }
+        .modal input:focus { outline: none; border-color: var(--primary-blue); }
+        .modal .hint { font-size: 0.8rem; color: var(--text-medium); margin-top: -0.7rem; margin-bottom: 1rem; }
+        .modal-actions { display: flex; gap: 0.75rem; margin-top: 1rem; }
+        .modal-actions .btn { flex: 1; }
+
         @media (max-width: 600px) {
             .header h1 { font-size: 1.8rem; }
             .question-text { font-size: 1.4rem; }
@@ -301,11 +355,34 @@
 </head>
 <body>
     <div class="container">
-        <header class="header">
+        <header class="header" style="position: relative;">
+            <button class="settings-btn" onclick="openSettings()" title="Voice Settings">&#9881;</button>
             <h1>🇺🇸 US Citizenship Test</h1>
             <p>Flashcards with Bulgarian Support & Audio</p>
             <p style="font-size: 0.9rem; margin-top: 0.5rem;">Карти за учене с българска поддръжка</p>
         </header>
+
+        <!-- Settings Modal -->
+        <div class="modal-overlay hidden" id="settingsModal" onclick="if(event.target===this)closeSettings()">
+            <div class="modal">
+                <h2>&#9881; Voice &amp; API Settings</h2>
+                <label for="elApiKey">ElevenLabs API Key</label>
+                <input type="password" id="elApiKey" placeholder="Enter your ElevenLabs API key">
+                <label for="elEnVoice">English Voice ID</label>
+                <input type="text" id="elEnVoice" placeholder="21m00Tcm4TlvDq8ikWAM">
+                <p class="hint">Default: Rachel (21m00Tcm4TlvDq8ikWAM)</p>
+                <label for="elBgVoice">Bulgarian Voice ID</label>
+                <input type="text" id="elBgVoice" placeholder="Paste a voice ID for Bulgarian">
+                <p class="hint">Leave blank to skip Bulgarian audio</p>
+                <label for="assemblyAiKey">AssemblyAI API Key</label>
+                <input type="password" id="assemblyAiKey" placeholder="Enter your AssemblyAI API key">
+                <p class="hint">For future speech-to-text features</p>
+                <div class="modal-actions">
+                    <button class="btn btn-primary" onclick="saveSettings()">Save</button>
+                    <button class="btn btn-outline" onclick="closeSettings()">Cancel</button>
+                </div>
+            </div>
+        </div>
 
         <!-- Setup Card -->
         <div class="card" id="setupCard">
@@ -659,6 +736,10 @@ let timer = null;
 let timeLeft = 30;
 let synth = window.speechSynthesis;
 
+// ElevenLabs audio cache: key = `${voiceId}:${speed}:${text}` -> Blob URL
+const audioCache = new Map();
+let currentAudio = null; // currently playing Audio element
+
 // Spaced repetition tracking
 let questionStats = {}; // { questionId: { correct: 0, wrong: 0, lastSeen: timestamp } }
 let questionQueue = []; // Weighted queue for spaced repetition
@@ -961,12 +1042,43 @@ function stopTimer() {
 
 function speakQuestion(slow = false) {
     const q = currentQuestions[currentIndex];
-    speak(q.q, slow);
+    if (!q) return;
+    const settings = getVoiceSettings();
+    const enVoice = settings.elEnVoice || '21m00Tcm4TlvDq8ikWAM';
+    const bgVoice = settings.elBgVoice;
+
+    if (settings.elApiKey) {
+        speakEL(q.q, enVoice, slow, settings.elApiKey).then(() => {
+            if (showBulgarian && bgVoice && q.qBg) {
+                return speakEL(q.qBg, bgVoice, slow, settings.elApiKey);
+            }
+        }).catch(() => {
+            // fallback to browser TTS
+            speakBrowser(q.q, slow, 'en-US');
+        });
+    } else {
+        speakBrowser(q.q, slow, 'en-US');
+    }
 }
 
 function speakAnswer(slow = false) {
     const q = currentQuestions[currentIndex];
-    speak(q.a, slow);
+    if (!q) return;
+    const settings = getVoiceSettings();
+    const enVoice = settings.elEnVoice || '21m00Tcm4TlvDq8ikWAM';
+    const bgVoice = settings.elBgVoice;
+
+    if (settings.elApiKey) {
+        speakEL(q.a, enVoice, slow, settings.elApiKey).then(() => {
+            if (showBulgarian && bgVoice && q.aBg) {
+                return speakEL(q.aBg, bgVoice, slow, settings.elApiKey);
+            }
+        }).catch(() => {
+            speakBrowser(q.a, slow, 'en-US');
+        });
+    } else {
+        speakBrowser(q.a, slow, 'en-US');
+    }
 }
 
 let selectedVoice = null;
@@ -1105,91 +1217,155 @@ function resetStats() {
     }
 }
 
+// ---- Voice Settings ----
+function getVoiceSettings() {
+    try {
+        const raw = localStorage.getItem('citizenshipVoiceSettings');
+        if (raw) return JSON.parse(raw);
+    } catch (e) { /* ignore */ }
+    return { elApiKey: '', elEnVoice: '21m00Tcm4TlvDq8ikWAM', elBgVoice: '', assemblyAiKey: '' };
+}
+
+function openSettings() {
+    const s = getVoiceSettings();
+    document.getElementById('elApiKey').value = s.elApiKey || '';
+    document.getElementById('elEnVoice').value = s.elEnVoice || '21m00Tcm4TlvDq8ikWAM';
+    document.getElementById('elBgVoice').value = s.elBgVoice || '';
+    document.getElementById('assemblyAiKey').value = s.assemblyAiKey || '';
+    document.getElementById('settingsModal').classList.remove('hidden');
+}
+
+function closeSettings() {
+    document.getElementById('settingsModal').classList.add('hidden');
+}
+
+function saveSettings() {
+    const settings = {
+        elApiKey: document.getElementById('elApiKey').value.trim(),
+        elEnVoice: document.getElementById('elEnVoice').value.trim() || '21m00Tcm4TlvDq8ikWAM',
+        elBgVoice: document.getElementById('elBgVoice').value.trim(),
+        assemblyAiKey: document.getElementById('assemblyAiKey').value.trim()
+    };
+    localStorage.setItem('citizenshipVoiceSettings', JSON.stringify(settings));
+    closeSettings();
+}
+
+// ---- ElevenLabs TTS ----
+function stopCurrentAudio() {
+    if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+    }
+    synth.cancel();
+}
+
+function speakEL(text, voiceId, slow, apiKey) {
+    stopCurrentAudio();
+
+    const speed = slow ? 0.65 : 1.0;
+    const cacheKey = `${voiceId}:${speed}:${text}`;
+
+    // Check cache
+    if (audioCache.has(cacheKey)) {
+        return playBlobUrl(audioCache.get(cacheKey));
+    }
+
+    // Visual feedback
+    const btn = document.getElementById('playQuestionBtn');
+    if (btn) btn.classList.add('speaking');
+
+    return fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'xi-api-key': apiKey
+        },
+        body: JSON.stringify({
+            text: text,
+            model_id: 'eleven_multilingual_v2',
+            voice_settings: {
+                stability: 0.5,
+                similarity_boost: 0.75,
+                speed: speed
+            }
+        })
+    })
+    .then(res => {
+        if (!res.ok) throw new Error(`ElevenLabs ${res.status}`);
+        return res.blob();
+    })
+    .then(blob => {
+        const url = URL.createObjectURL(blob);
+        audioCache.set(cacheKey, url);
+        return playBlobUrl(url);
+    })
+    .finally(() => {
+        if (btn) btn.classList.remove('speaking');
+    });
+}
+
+function playBlobUrl(url) {
+    return new Promise((resolve, reject) => {
+        const audio = new Audio(url);
+        currentAudio = audio;
+        audio.onended = () => { currentAudio = null; resolve(); };
+        audio.onerror = (e) => { currentAudio = null; reject(e); };
+        audio.play().catch(reject);
+    });
+}
+
+// ---- Browser SpeechSynthesis fallback ----
 function loadVoices() {
     const voices = synth.getVoices();
     if (voices.length === 0) return;
-    
-    // Log available voices for debugging
-    console.log('Available voices:', voices.map(v => `${v.name} (${v.lang})`));
-    
-    // Priority order - iOS/Safari premium voices first
-    const preferredVoices = [
-        // iOS Premium/Enhanced voices (sound most natural)
-        'Samantha',           // iOS default, very natural
-        'Aaron',              // iOS male voice
-        'Daniel',             // British but clear
-        'Fred',               // iOS male
-        'Tom',                // iOS male
-        // macOS voices
-        'Alex',               // macOS male, good quality
-        // Google voices (Chrome)
-        'Google US English',
-        // Microsoft voices (Windows/Edge)
-        'Microsoft David',
-        'Microsoft Mark',
-        'David',
-    ];
-    
-    // Try to find a preferred voice
+    const preferredVoices = ['Samantha','Aaron','Daniel','Alex','Google US English','Microsoft David','David'];
     for (const name of preferredVoices) {
-        const voice = voices.find(v => 
-            v.name.includes(name) && 
-            (v.lang.startsWith('en') || v.lang === '')
-        );
-        if (voice) {
-            selectedVoice = voice;
-            console.log('Selected voice:', voice.name);
-            return;
-        }
+        const voice = voices.find(v => v.name.includes(name) && (v.lang.startsWith('en') || v.lang === ''));
+        if (voice) { selectedVoice = voice; return; }
     }
-    
-    // Fallback: any English voice
-    selectedVoice = voices.find(v => v.lang === 'en-US') ||
-                    voices.find(v => v.lang.startsWith('en')) ||
-                    voices[0];
-    
-    if (selectedVoice) console.log('Fallback voice:', selectedVoice.name);
+    selectedVoice = voices.find(v => v.lang === 'en-US') || voices.find(v => v.lang.startsWith('en')) || voices[0];
 }
 
-// Load voices - iOS needs a slight delay
 synth.onvoiceschanged = loadVoices;
 setTimeout(loadVoices, 100);
 setTimeout(loadVoices, 500);
 loadVoices();
 
-function speak(text, slow = false) {
-    synth.cancel(); // Stop any current speech
-    
-    // Reload voices if needed (iOS sometimes needs this)
-    if (!selectedVoice) {
-        loadVoices();
-    }
-    
+function speakBrowser(text, slow = false, lang = 'en-US') {
+    synth.cancel();
+    if (!selectedVoice) loadVoices();
+
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-US';
-    utterance.rate = slow ? 0.5 : 0.7; // Slower for clearer pronunciation
+    utterance.lang = lang;
+    utterance.rate = slow ? 0.5 : 0.7;
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
-    
-    if (selectedVoice) {
-        utterance.voice = selectedVoice;
-    }
-    
-    // Visual feedback
+    if (selectedVoice) utterance.voice = selectedVoice;
+
     const btn = document.getElementById('playQuestionBtn');
     if (btn) {
         btn.classList.add('speaking');
         utterance.onend = () => btn.classList.remove('speaking');
         utterance.onerror = () => btn.classList.remove('speaking');
     }
-    
-    // iOS fix: need to speak in response to user action
     synth.speak(utterance);
+}
+
+// Legacy wrapper so any remaining callers still work
+function speak(text, slow = false) {
+    const settings = getVoiceSettings();
+    if (settings.elApiKey) {
+        const voiceId = settings.elEnVoice || '21m00Tcm4TlvDq8ikWAM';
+        speakEL(text, voiceId, slow, settings.elApiKey).catch(() => speakBrowser(text, slow));
+    } else {
+        speakBrowser(text, slow);
+    }
 }
 
 function endSession() {
     stopTimer();
-    synth.cancel();
+    stopCurrentAudio();
     
     document.getElementById('flashcardCard').classList.add('hidden');
     document.getElementById('resultsCard').classList.remove('hidden');
@@ -1213,7 +1389,7 @@ function endSession() {
 
 function resetAll() {
     stopTimer();
-    synth.cancel();
+    stopCurrentAudio();
     
     document.getElementById('setupCard').classList.remove('hidden');
     document.getElementById('progressCard').classList.add('hidden');
@@ -1234,6 +1410,13 @@ function shuffleArray(array) {
 
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
+    // Close settings modal on Escape
+    if (e.code === 'Escape' && !document.getElementById('settingsModal').classList.contains('hidden')) {
+        closeSettings();
+        return;
+    }
+    // Don't handle shortcuts when settings modal is open or typing in inputs
+    if (!document.getElementById('settingsModal').classList.contains('hidden')) return;
     if (document.getElementById('flashcardCard').classList.contains('hidden')) return;
     
     if (e.code === 'Space') {
