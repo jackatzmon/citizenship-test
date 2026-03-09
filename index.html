@@ -887,9 +887,11 @@ function showCard() {
     const q = currentQuestions[currentIndex];
     isFlipped = false;
     
-    // Clear user's previous answer
+    // Clear user's previous answer and keyword score
     document.getElementById('userAnswer').textContent = '';
     document.getElementById('answerSection').classList.add('hidden');
+    const oldScore = document.getElementById('keywordScore');
+    if (oldScore) oldScore.remove();
     
     // Update question side
     document.getElementById('questionNumber').textContent = `${currentIndex + 1} / ${currentQuestions.length}`;
@@ -924,8 +926,9 @@ function flipCard() {
     
     if (isFlipped) {
         // Show user's answer if they recorded one
-        const userAnswer = document.getElementById('userAnswer').textContent;
-        if (userAnswer && userAnswer !== '' && userAnswer !== 'Listening... / Слушам...') {
+        const userAnswerEl = document.getElementById('userAnswer');
+        const userAnswer = userAnswerEl.textContent || userAnswerEl.innerText;
+        if (userAnswer && userAnswer.trim() !== '' && !userAnswer.includes('Listening') && !userAnswer.includes('Connecting')) {
             document.getElementById('userAnswerDisplay').textContent = userAnswer;
             document.getElementById('userAnswerCompare').style.display = 'block';
         } else {
@@ -1082,10 +1085,18 @@ function speakAnswer(slow = false) {
 }
 
 let selectedVoice = null;
-let recognition = null;
+let recognition = null; // webkitSpeechRecognition fallback
 let isRecording = false;
 
-// Initialize speech recognition
+// AssemblyAI real-time transcription state
+let aaiSocket = null;
+let aaiAudioContext = null;
+let aaiMediaStream = null;
+let aaiProcessor = null;
+let aaiPartialTranscript = '';
+let aaiFinalTranscript = '';
+
+// Initialize webkitSpeechRecognition as fallback
 function initSpeechRecognition() {
     if ('webkitSpeechRecognition' in window) {
         recognition = new webkitSpeechRecognition();
@@ -1124,34 +1135,37 @@ function initSpeechRecognition() {
 }
 
 function toggleRecording() {
-    if (!recognition) {
-        initSpeechRecognition();
-    }
-    
-    if (!recognition) {
-        // Speech recognition not supported (iPhone Safari)
-        alert('Speech recognition is not supported in Safari on iPhone.\n\nPractice tip: Say your answer out loud, then flip the card to check!\n\nСъвет: Кажете отговора си на глас, след това обърнете картата!');
-        return;
-    }
-    
     if (isRecording) {
         stopRecording();
+        return;
+    }
+
+    const settings = getVoiceSettings();
+    if (settings.assemblyAiKey) {
+        startAssemblyAI(settings.assemblyAiKey);
     } else {
-        startRecording();
+        // Fallback to webkitSpeechRecognition
+        if (!recognition) initSpeechRecognition();
+        if (!recognition) {
+            alert('No AssemblyAI key set and Speech Recognition not supported.\nAdd your AssemblyAI key in Settings (gear icon).\n\nНяма AssemblyAI ключ. Добавете го в настройките.');
+            return;
+        }
+        startBrowserRecording();
     }
 }
 
-function startRecording() {
+// --- Browser SpeechRecognition fallback ---
+function startBrowserRecording() {
     if (!recognition) return;
-    
+
     document.getElementById('userAnswer').textContent = 'Listening... / Слушам...';
     document.getElementById('answerSection').classList.remove('hidden');
     document.getElementById('recordingStatus').classList.remove('hidden');
-    
+
     const btn = document.getElementById('recordBtn');
     btn.innerHTML = '🔴 Recording...';
     btn.classList.add('speaking');
-    
+
     try {
         recognition.start();
         isRecording = true;
@@ -1161,19 +1175,271 @@ function startRecording() {
     }
 }
 
-function stopRecording() {
-    if (recognition && isRecording) {
-        recognition.stop();
+// --- AssemblyAI Real-time Transcription ---
+async function startAssemblyAI(apiKey) {
+    aaiPartialTranscript = '';
+    aaiFinalTranscript = '';
+
+    document.getElementById('userAnswer').innerHTML = '<em>Connecting... / Свързване...</em>';
+    document.getElementById('answerSection').classList.remove('hidden');
+    document.getElementById('recordingStatus').classList.remove('hidden');
+
+    const btn = document.getElementById('recordBtn');
+    btn.innerHTML = '🔴 Recording...';
+    btn.classList.add('speaking');
+    isRecording = true;
+
+    try {
+        // Request microphone
+        aaiMediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (e) {
+        console.log('Microphone access denied:', e);
+        alert('Please allow microphone access to record your answer.\n\nМоля, разрешете достъп до микрофона.');
+        stopRecording();
+        return;
     }
+
+    try {
+        // Create AudioContext — try 16kHz but Safari may use device native rate
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        aaiAudioContext = new AudioCtx({ sampleRate: 16000 });
+        const actualRate = aaiAudioContext.sampleRate;
+        console.log('AudioContext sample rate:', actualRate);
+        const source = aaiAudioContext.createMediaStreamSource(aaiMediaStream);
+
+        // Use ScriptProcessorNode (widely supported including Safari)
+        aaiProcessor = aaiAudioContext.createScriptProcessor(4096, 1, 1);
+
+        // Open WebSocket to AssemblyAI (token passed as query param for browser compatibility)
+        const wsUrl = 'wss://api.assemblyai.com/v2/realtime/ws?sample_rate=16000&token=' + encodeURIComponent(apiKey);
+        aaiSocket = new WebSocket(wsUrl);
+
+        aaiSocket.onopen = () => {
+            console.log('AssemblyAI WebSocket connected');
+            document.getElementById('userAnswer').innerHTML = '<em>Listening... / Слушам...</em>';
+        };
+
+        aaiSocket.onmessage = (event) => {
+            const msg = JSON.parse(event.data);
+
+            if (msg.error) {
+                console.error('AssemblyAI error:', msg.error);
+                if (msg.error.includes('auth') || msg.error.includes('token') || msg.error.includes('Unauthorized')) {
+                    alert('AssemblyAI API key is invalid. Please check your key in Settings.\n\nНевалиден AssemblyAI ключ.');
+                }
+                stopRecording();
+                return;
+            }
+
+            if (msg.message_type === 'PartialTranscript' && msg.text) {
+                aaiPartialTranscript = msg.text;
+                updateTranscriptDisplay();
+            } else if (msg.message_type === 'FinalTranscript' && msg.text) {
+                aaiFinalTranscript += (aaiFinalTranscript ? ' ' : '') + msg.text;
+                aaiPartialTranscript = '';
+                updateTranscriptDisplay();
+            }
+        };
+
+        aaiSocket.onerror = (e) => {
+            console.error('AssemblyAI WebSocket error:', e);
+            stopRecording();
+        };
+
+        aaiSocket.onclose = (e) => {
+            console.log('AssemblyAI WebSocket closed:', e.code, e.reason);
+        };
+
+        // Process audio and send to WebSocket
+        aaiProcessor.onaudioprocess = (e) => {
+            if (!aaiSocket || aaiSocket.readyState !== WebSocket.OPEN) return;
+
+            let inputData = e.inputBuffer.getChannelData(0);
+
+            // Resample to 16kHz if AudioContext uses a different rate (common on Safari)
+            if (actualRate !== 16000) {
+                const ratio = 16000 / actualRate;
+                const newLen = Math.round(inputData.length * ratio);
+                const resampled = new Float32Array(newLen);
+                for (let i = 0; i < newLen; i++) {
+                    const srcIdx = i / ratio;
+                    const idx = Math.floor(srcIdx);
+                    const frac = srcIdx - idx;
+                    resampled[i] = idx + 1 < inputData.length
+                        ? inputData[idx] * (1 - frac) + inputData[idx + 1] * frac
+                        : inputData[idx];
+                }
+                inputData = resampled;
+            }
+
+            // Convert float32 to int16 PCM
+            const int16 = new Int16Array(inputData.length);
+            for (let i = 0; i < inputData.length; i++) {
+                const s = Math.max(-1, Math.min(1, inputData[i]));
+                int16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+            }
+            // Convert to base64 and send
+            const bytes = new Uint8Array(int16.buffer);
+            let binary = '';
+            for (let i = 0; i < bytes.byteLength; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            const base64 = btoa(binary);
+            aaiSocket.send(JSON.stringify({ audio_data: base64 }));
+        };
+
+        source.connect(aaiProcessor);
+        aaiProcessor.connect(aaiAudioContext.destination);
+
+    } catch (e) {
+        console.error('AssemblyAI setup error:', e);
+        stopRecording();
+    }
+}
+
+function updateTranscriptDisplay() {
+    const el = document.getElementById('userAnswer');
+    let html = '';
+    if (aaiFinalTranscript) {
+        html += aaiFinalTranscript;
+    }
+    if (aaiPartialTranscript) {
+        html += (html ? ' ' : '') + '<em style="color: var(--text-medium);">' + aaiPartialTranscript + '</em>';
+    }
+    if (!html) {
+        html = '<em>Listening... / Слушам...</em>';
+    }
+    el.innerHTML = html;
+    document.getElementById('answerSection').classList.remove('hidden');
+}
+
+function stopRecording() {
+    // Stop AssemblyAI WebSocket
+    if (aaiSocket && aaiSocket.readyState === WebSocket.OPEN) {
+        try {
+            aaiSocket.send(JSON.stringify({ terminate_session: true }));
+        } catch (e) { /* ignore */ }
+        aaiSocket.close();
+    }
+    aaiSocket = null;
+
+    // Stop audio processing
+    if (aaiProcessor) {
+        aaiProcessor.disconnect();
+        aaiProcessor = null;
+    }
+    if (aaiAudioContext) {
+        aaiAudioContext.close().catch(() => {});
+        aaiAudioContext = null;
+    }
+    if (aaiMediaStream) {
+        aaiMediaStream.getTracks().forEach(t => t.stop());
+        aaiMediaStream = null;
+    }
+
+    // Stop browser recognition fallback
+    if (recognition && isRecording) {
+        try { recognition.stop(); } catch (e) { /* ignore */ }
+    }
+
+    const wasRecording = isRecording;
     isRecording = false;
-    
+
     document.getElementById('recordingStatus').classList.add('hidden');
-    
+
     const btn = document.getElementById('recordBtn');
     if (btn) {
         btn.innerHTML = '🎤 Answer / Отговори';
         btn.classList.remove('speaking');
     }
+
+    // If we used AssemblyAI and got a transcript, finalize and run keyword comparison
+    if (wasRecording && aaiFinalTranscript) {
+        const el = document.getElementById('userAnswer');
+        el.textContent = aaiFinalTranscript;
+        runKeywordComparison(aaiFinalTranscript);
+    }
+}
+
+// --- Keyword Comparison Scoring ---
+function extractKeyTerms(answerText) {
+    const stopWords = new Set([
+        'a', 'an', 'the', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+        'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
+        'should', 'may', 'might', 'shall', 'can', 'to', 'of', 'in', 'for',
+        'on', 'with', 'at', 'by', 'from', 'as', 'into', 'through', 'during',
+        'before', 'after', 'above', 'below', 'between', 'under', 'again',
+        'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why',
+        'how', 'all', 'each', 'every', 'both', 'few', 'more', 'most', 'other',
+        'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so',
+        'than', 'too', 'very', 'and', 'but', 'or', 'if', 'because', 'it',
+        'its', 'that', 'this', 'what', 'which', 'who', 'whom', 'these',
+        'those', 'am', 'he', 'she', 'they', 'we', 'you', 'me', 'him', 'her',
+        'us', 'them', 'my', 'your', 'his', 'our', 'their', 'also', 'just',
+        'about', 'over', 'up', 'out', 'one', 'two', 'first', 'new'
+    ]);
+
+    const words = answerText
+        .toLowerCase()
+        .replace(/[^a-z0-9\s'-]/g, ' ')
+        .split(/\s+/)
+        .filter(w => w.length > 1 && !stopWords.has(w));
+
+    return [...new Set(words)];
+}
+
+function runKeywordComparison(userTranscript) {
+    if (!currentQuestions || !currentQuestions[currentIndex]) return;
+
+    const q = currentQuestions[currentIndex];
+    const correctAnswer = q.a;
+    const keyTerms = extractKeyTerms(correctAnswer);
+
+    if (keyTerms.length === 0) return;
+
+    const userWords = userTranscript.toLowerCase().replace(/[^a-z0-9\s'-]/g, ' ');
+
+    let matched = [];
+    let missing = [];
+
+    keyTerms.forEach(term => {
+        if (userWords.includes(term)) {
+            matched.push(term);
+        } else {
+            missing.push(term);
+        }
+    });
+
+    // Build comparison HTML
+    const scoreEl = document.createElement('div');
+    scoreEl.id = 'keywordScore';
+    scoreEl.style.cssText = 'margin-top: 0.75rem; padding: 0.75rem; background: #f0f9ff; border-radius: 8px; font-size: 0.9rem;';
+
+    let scoreHtml = '<p style="font-weight: 600; margin-bottom: 0.5rem;">Score: ' + matched.length + '/' + keyTerms.length + ' key terms</p>';
+
+    if (matched.length > 0) {
+        scoreHtml += '<p style="margin-bottom: 0.25rem;">';
+        matched.forEach(t => {
+            scoreHtml += '<span style="background: #d1fae5; color: #065f46; padding: 2px 6px; border-radius: 4px; margin: 2px; display: inline-block;">\u2713 ' + t + '</span> ';
+        });
+        scoreHtml += '</p>';
+    }
+    if (missing.length > 0) {
+        scoreHtml += '<p>';
+        missing.forEach(t => {
+            scoreHtml += '<span style="background: #fee2e2; color: #991b1b; padding: 2px 6px; border-radius: 4px; margin: 2px; display: inline-block;">\u2717 ' + t + '</span> ';
+        });
+        scoreHtml += '</p>';
+    }
+
+    scoreEl.innerHTML = scoreHtml;
+
+    // Remove old score if present
+    const oldScore = document.getElementById('keywordScore');
+    if (oldScore) oldScore.remove();
+
+    // Append to answer section
+    document.getElementById('answerSection').appendChild(scoreEl);
 }
 
 // Initialize on load
