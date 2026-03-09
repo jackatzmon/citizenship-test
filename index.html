@@ -310,6 +310,30 @@
             transition: all 0.2s;
         }
         .settings-btn:hover { background: rgba(255,255,255,0.35); transform: rotate(45deg); }
+        .status-dot {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ef4444;
+            border: 1.5px solid rgba(255,255,255,0.8);
+            pointer-events: none;
+        }
+        .offline-badge {
+            position: fixed;
+            top: 0.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #6b7280;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 2px 10px;
+            border-radius: 10px;
+            z-index: 1000;
+        }
 
         .modal-overlay {
             position: fixed;
@@ -354,9 +378,10 @@
     </style>
 </head>
 <body>
+    <div id="offlineBadge" class="offline-badge hidden">Offline</div>
     <div class="container">
         <header class="header" style="position: relative;">
-            <button class="settings-btn" onclick="openSettings()" title="Voice Settings">&#9881;</button>
+            <button class="settings-btn" onclick="openSettings()" title="Voice Settings">&#9881;<span class="status-dot" id="apiStatusDot"></span></button>
             <h1>🇺🇸 US Citizenship Test</h1>
             <p>Flashcards with Bulgarian Support & Audio</p>
             <p style="font-size: 0.9rem; margin-top: 0.5rem;">Карти за учене с българска поддръжка</p>
@@ -629,10 +654,10 @@ const allQuestions = [
     { id: 17, category: "government", q: "What are the two parts of the U.S. Congress?", a: "The Senate and House of Representatives", qBg: "Кои са двете части на Конгреса на САЩ?", aBg: "Сенатът и Камарата на представителите" },
     { id: 18, category: "government", q: "How many U.S. Senators are there?", a: "100", qBg: "Колко американски сенатори има?", aBg: "100" },
     { id: 19, category: "government", q: "We elect a U.S. Senator for how many years?", a: "6", qBg: "За колко години избираме американски сенатор?", aBg: "6" },
-    { id: 20, category: "government", q: "Who is one of your state's U.S. Senators now?", a: "Answers vary by state", qBg: "Кой е един от сенаторите на вашия щат сега?", aBg: "Отговорите варират по щат" },
+    { id: 20, category: "government", q: "Who is one of your state's U.S. Senators now?", a: "Cory Booker and Andy Kim (New Jersey)", qBg: "Кой е един от сенаторите на вашия щат сега?", aBg: "Кори Букър и Анди Ким (Ню Джърси)" },
     { id: 21, category: "government", q: "The House of Representatives has how many voting members?", a: "435", qBg: "Колко гласуващи членове има Камарата на представителите?", aBg: "435" },
     { id: 22, category: "government", q: "We elect a U.S. Representative for how many years?", a: "2", qBg: "За колко години избираме представител в САЩ?", aBg: "2" },
-    { id: 23, category: "government", q: "Name your U.S. Representative.", a: "Answers vary by district", qBg: "Назовете вашия представител в САЩ.", aBg: "Отговорите варират по район" },
+    { id: 23, category: "government", q: "Name your U.S. Representative.", a: "Depends on your district — check house.gov", qBg: "Назовете вашия представител в САЩ.", aBg: "Зависи от вашия район — проверете house.gov" },
     { id: 24, category: "government", q: "Who does a U.S. Senator represent?", a: "All people of the state", qBg: "Кого представлява американски сенатор?", aBg: "Всички хора в щата" },
     { id: 25, category: "government", q: "Why do some states have more Representatives than other states?", a: "Because of the state's population, because they have more people", qBg: "Защо някои щати имат повече представители от други?", aBg: "Заради населението на щата, защото имат повече хора" },
     { id: 26, category: "government", q: "We elect a President for how many years?", a: "4", qBg: "За колко години избираме президент?", aBg: "4" },
@@ -652,8 +677,8 @@ const allQuestions = [
     { id: 40, category: "government", q: "Who is the Chief Justice of the United States now?", a: "John Roberts", qBg: "Кой е главният съдия на САЩ сега?", aBg: "Джон Робъртс" },
     { id: 41, category: "government", q: "Under our Constitution, some powers belong to the federal government. What is one power of the federal government?", a: "To print money, to declare war, to create an army, to make treaties", qBg: "Според нашата Конституция някои правомощия принадлежат на федералното правителство. Кое е едно правомощие?", aBg: "Да печата пари, да обявява война, да създава армия, да сключва договори" },
     { id: 42, category: "government", q: "Under our Constitution, some powers belong to the states. What is one power of the states?", a: "Provide schooling and education, provide protection (police), provide safety (fire departments), give a driver's license, approve zoning and land use", qBg: "Според нашата Конституция някои правомощия принадлежат на щатите. Кое е едно правомощие?", aBg: "Осигуряване на образование, осигуряване на защита (полиция), издаване на шофьорска книжка" },
-    { id: 43, category: "government", q: "Who is the Governor of your state now?", a: "Answers vary by state", qBg: "Кой е губернаторът на вашия щат сега?", aBg: "Отговорите варират по щат" },
-    { id: 44, category: "government", q: "What is the capital of your state?", a: "Answers vary by state", qBg: "Коя е столицата на вашия щат?", aBg: "Отговорите варират по щат" },
+    { id: 43, category: "government", q: "Who is the Governor of your state now?", a: "Mikie Sherrill (New Jersey, took office January 2026)", qBg: "Кой е губернаторът на вашия щат сега?", aBg: "Мики Шерил (Ню Джърси, встъпи в длъжност януари 2026)" },
+    { id: 44, category: "government", q: "What is the capital of your state?", a: "Trenton (New Jersey)", qBg: "Коя е столицата на вашия щат?", aBg: "Трентън (Ню Джърси)" },
     { id: 45, category: "government", q: "What are the two major political parties in the United States?", a: "Democratic and Republican", qBg: "Кои са двете основни политически партии в САЩ?", aBg: "Демократическа и Републиканска" },
     { id: 46, category: "government", q: "What is the political party of the President now?", a: "Republican", qBg: "Коя е политическата партия на президента сега?", aBg: "Републиканска" },
     { id: 47, category: "government", q: "What is the name of the Speaker of the House of Representatives now?", a: "Mike Johnson (as of 2025)", qBg: "Как се казва председателят на Камарата на представителите сега?", aBg: "Майк Джонсън (към 2025)" },
@@ -1050,7 +1075,7 @@ function speakQuestion(slow = false) {
     const enVoice = settings.elEnVoice || '21m00Tcm4TlvDq8ikWAM';
     const bgVoice = settings.elBgVoice;
 
-    if (settings.elApiKey) {
+    if (settings.elApiKey && !isOffline) {
         speakEL(q.q, enVoice, slow, settings.elApiKey).then(() => {
             if (showBulgarian && bgVoice && q.qBg) {
                 return speakEL(q.qBg, bgVoice, slow, settings.elApiKey);
@@ -1071,7 +1096,7 @@ function speakAnswer(slow = false) {
     const enVoice = settings.elEnVoice || '21m00Tcm4TlvDq8ikWAM';
     const bgVoice = settings.elBgVoice;
 
-    if (settings.elApiKey) {
+    if (settings.elApiKey && !isOffline) {
         speakEL(q.a, enVoice, slow, settings.elApiKey).then(() => {
             if (showBulgarian && bgVoice && q.aBg) {
                 return speakEL(q.aBg, bgVoice, slow, settings.elApiKey);
@@ -1141,7 +1166,7 @@ function toggleRecording() {
     }
 
     const settings = getVoiceSettings();
-    if (settings.assemblyAiKey) {
+    if (settings.assemblyAiKey && !isOffline) {
         startAssemblyAI(settings.assemblyAiKey);
     } else {
         // Fallback to webkitSpeechRecognition
@@ -1442,11 +1467,39 @@ function runKeywordComparison(userTranscript) {
     document.getElementById('answerSection').appendChild(scoreEl);
 }
 
+// --- API Status Dot ---
+function updateApiStatusDot() {
+    const s = getVoiceSettings();
+    const dot = document.getElementById('apiStatusDot');
+    if (!dot) return;
+    let count = 0;
+    if (s.elApiKey) count++;
+    if (s.assemblyAiKey) count++;
+    dot.style.background = count === 2 ? '#22c55e' : count === 1 ? '#eab308' : '#ef4444';
+}
+
+// --- Offline Detection ---
+let isOffline = false;
+
+function updateOnlineStatus() {
+    isOffline = !navigator.onLine;
+    const badge = document.getElementById('offlineBadge');
+    if (badge) {
+        if (isOffline) badge.classList.remove('hidden');
+        else badge.classList.add('hidden');
+    }
+}
+
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+
 // Initialize on load
 document.addEventListener('DOMContentLoaded', () => {
     initSpeechRecognition();
     loadStats();
     updateStatsDisplay();
+    updateApiStatusDot();
+    updateOnlineStatus();
 });
 
 function updateStatsDisplay() {
@@ -1513,6 +1566,7 @@ function saveSettings() {
         assemblyAiKey: document.getElementById('assemblyAiKey').value.trim()
     };
     localStorage.setItem('citizenshipVoiceSettings', JSON.stringify(settings));
+    updateApiStatusDot();
     closeSettings();
 }
 
