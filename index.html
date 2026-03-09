@@ -746,7 +746,7 @@ const allQuestions = [
     { id: 97, category: "symbols", q: "Why does the flag have 50 stars?", a: "Because there is one star for each state, because each star represents a state, because there are 50 states", qBg: "Защо знамето има 50 звезди?", aBg: "Защото има по една звезда за всеки щат, защото има 50 щата" },
     { id: 98, category: "symbols", q: "What is the name of the national anthem?", a: "The Star-Spangled Banner", qBg: "Как се казва националният химн?", aBg: "Звездното знаме" },
     { id: 99, category: "symbols", q: "When do we celebrate Independence Day?", a: "July 4", qBg: "Кога празнуваме Деня на независимостта?", aBg: "4 юли" },
-    { id: 100, category: "symbols", q: "Name two national U.S. holidays.", a: "Independence Day (July 4th) and Thanksgiving", qBg: "Назовете два национални празника на САЩ.", aBg: "Ден на независимостта (4 юли) и Ден на благодарността" }
+    { id: 100, category: "symbols", q: "Name two national U.S. holidays.", a: "Independence Day (July 4th) and Thanksgiving (also: Juneteenth)", qBg: "Назовете два национални празника на САЩ.", aBg: "Ден на независимостта (4 юли) и Ден на благодарността (също: Джунтийнт)" }
 ];
 
 // App State
@@ -1174,7 +1174,23 @@ function toggleRecording() {
 
     const settings = getVoiceSettings();
     if (settings.assemblyAiKey && !isOffline) {
-        startAssemblyAI(settings.assemblyAiKey);
+        // iOS Safari requires getUserMedia DIRECTLY in the tap handler — no async gap
+        document.getElementById('userAnswer').innerHTML = '<em>Connecting... / Свързване...</em>';
+        document.getElementById('answerSection').classList.remove('hidden');
+        document.getElementById('recordingStatus').classList.remove('hidden');
+        const btn = document.getElementById('recordBtn');
+        btn.innerHTML = '🔴 Recording...';
+        btn.classList.add('speaking');
+        isRecording = true;
+
+        navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+            aaiMediaStream = stream;
+            connectAssemblyAI(settings.assemblyAiKey);
+        }).catch(e => {
+            console.log('Microphone access denied:', e);
+            alert('Please allow microphone access to record your answer.\n\nМоля, разрешете достъп до микрофона.');
+            stopRecording();
+        });
     } else {
         // Fallback to webkitSpeechRecognition
         if (!recognition) initSpeechRecognition();
@@ -1208,28 +1224,10 @@ function startBrowserRecording() {
 }
 
 // --- AssemblyAI Real-time Transcription ---
-async function startAssemblyAI(apiKey) {
+// Called AFTER getUserMedia succeeds (stream already in aaiMediaStream)
+function connectAssemblyAI(apiKey) {
     aaiPartialTranscript = '';
     aaiFinalTranscript = '';
-
-    document.getElementById('userAnswer').innerHTML = '<em>Connecting... / Свързване...</em>';
-    document.getElementById('answerSection').classList.remove('hidden');
-    document.getElementById('recordingStatus').classList.remove('hidden');
-
-    const btn = document.getElementById('recordBtn');
-    btn.innerHTML = '🔴 Recording...';
-    btn.classList.add('speaking');
-    isRecording = true;
-
-    try {
-        // Request microphone
-        aaiMediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    } catch (e) {
-        console.log('Microphone access denied:', e);
-        alert('Please allow microphone access to record your answer.\n\nМоля, разрешете достъп до микрофона.');
-        stopRecording();
-        return;
-    }
 
     try {
         // Create AudioContext — try 16kHz but Safari may use device native rate
